@@ -152,13 +152,110 @@ fn path_of(dir: &Path) -> PathBuf {
 
 pub fn load(dir: &Path) -> Saved {
   let mut s: Saved = std::fs::read(path_of(dir)).ok().and_then(|b| serde_json::from_slice(&b).ok()).unwrap_or_default();
-  if s.device.is_empty() {
+  if let Some(id) = machine_device() {
+    // O id vem da máquina, não do arquivo: o licenca.json copiado para outro computador não leva o
+    // Pro junto (lá o id é outro, e a licença, de outro computador, conta como Grátis).
+    s.device = id;
+  } else if s.device.is_empty() {
     s.device = crate::common::hex(&crate::common::random::<8>());
   }
+  // Editar ou apagar o `last_seen` do arquivo não desfaz a proteção contra relógio atrasado.
+  s.last_seen = s.last_seen.max(clock::get(&s.device));
   s
 }
 
+/// Id deste computador para a licença, derivado do `MachineGuid` do Windows (com um sal do app, para
+/// não expor o id da máquina ao site). `None` na versão de desenvolvimento e nos testes, que usam o
+/// id aleatório guardado na pasta de dados (dois apps de teste no mesmo PC são "dois computadores").
+fn machine_device() -> Option<String> {
+  if cfg!(debug_assertions) {
+    return None;
+  }
+  machine_guid().map(|g| device_from_guid(&g))
+}
+
+fn device_from_guid(guid: &str) -> String {
+  use sha2::{Digest, Sha256};
+  let h = Sha256::digest(format!("tesseract-licenca-pc|{}", guid.trim().to_lowercase()).as_bytes());
+  crate::common::hex(&h[..8])
+}
+
+#[cfg(windows)]
+fn machine_guid() -> Option<String> {
+  use windows::core::w;
+  use windows::Win32::Foundation::ERROR_SUCCESS;
+  use windows::Win32::System::Registry::{RegGetValueW, HKEY_LOCAL_MACHINE, RRF_RT_REG_SZ, RRF_SUBKEY_WOW6464KEY};
+  let mut buf = [0u16; 128];
+  let mut len = std::mem::size_of_val(&buf) as u32;
+  // SAFETY: buffer e tamanho são nossos e válidos; a API escreve no máximo `len` bytes.
+  let r = unsafe {
+    RegGetValueW(HKEY_LOCAL_MACHINE, w!("SOFTWARE\\Microsoft\\Cryptography"), w!("MachineGuid"), RRF_RT_REG_SZ | RRF_SUBKEY_WOW6464KEY, None, Some(buf.as_mut_ptr().cast()), Some(&mut len))
+  };
+  if r != ERROR_SUCCESS {
+    return None;
+  }
+  let n = (len as usize / 2).min(buf.len());
+  let s = String::from_utf16_lossy(&buf[..n]).trim_end_matches('\0').trim().to_string();
+  (s.len() >= 8).then_some(s)
+}
+#[cfg(not(windows))]
+fn machine_guid() -> Option<String> {
+  None
+}
+
+/// Maior horário já visto, guardado também no Cofre do Windows (entrada `licenca.relogio.<id>`), com
+/// cache no processo (o plano é conferido a cada comando Pro). Nos testes, só o cache, separado por id.
+mod clock {
+  use std::collections::HashMap;
+  use std::sync::Mutex;
+
+  static CACHE: Mutex<Option<HashMap<String, u64>>> = Mutex::new(None);
+
+  #[cfg(not(test))]
+  fn entry(device: &str) -> Option<keyring::Entry> {
+    keyring::Entry::new(super::KEYRING_SERVICE, &format!("licenca.relogio.{device}")).ok()
+  }
+  #[cfg(not(test))]
+  fn read(device: &str) -> u64 {
+    entry(device).and_then(|e| e.get_password().ok()).and_then(|t| t.trim().parse().ok()).unwrap_or(0)
+  }
+  #[cfg(not(test))]
+  fn write(device: &str, t: u64) {
+    if let Some(e) = entry(device) {
+      if let Err(err) = e.set_password(&t.to_string()) {
+        log::warn!("licença: não deu para guardar o relógio no Cofre: {err}");
+      }
+    }
+  }
+  #[cfg(test)]
+  fn read(_: &str) -> u64 {
+    0
+  }
+  #[cfg(test)]
+  fn write(_: &str, _: u64) {}
+
+  pub fn get(device: &str) -> u64 {
+    let mut c = CACHE.lock().unwrap_or_else(|e| e.into_inner());
+    let map = c.get_or_insert_with(HashMap::new);
+    if let Some(t) = map.get(device) {
+      return *t;
+    }
+    let t = read(device);
+    map.insert(device.to_string(), t);
+    t
+  }
+
+  pub fn bump(device: &str, t: u64) {
+    if t <= get(device) {
+      return;
+    }
+    write(device, t);
+    CACHE.lock().unwrap_or_else(|e| e.into_inner()).get_or_insert_with(HashMap::new).insert(device.to_string(), t);
+  }
+}
+
 pub fn save(dir: &Path, s: &Saved) -> Res<()> {
+  clock::bump(&s.device, s.last_seen);
   std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
   let tmp = dir.join(format!("{FILE}.tmp"));
   std::fs::write(&tmp, serde_json::to_vec_pretty(s).map_err(|e| e.to_string())?).map_err(|e| format!("não foi possível gravar a licença: {e}"))?;
@@ -305,6 +402,7 @@ pub fn plan(db_path: &Path) -> Plan {
 }
 
 /// Plano pelo caminho do banco aberto na conexão (para quem não tem o AppDb, como as automações).
+#[cfg_attr(not(pro), allow(dead_code))] // só as automações (Pro) usam
 pub fn plan_conn(c: &rusqlite::Connection) -> Plan {
   match c.path().filter(|p| !p.is_empty()) {
     Some(p) => plan(Path::new(p)),
@@ -767,6 +865,43 @@ mod tests {
   }
 
   #[test]
+  #[cfg_attr(not(debug_assertions), ignore = "no lançamento o id é o da máquina: todas as pastas de teste dividem o mesmo relógio")]
+  fn relogio_nao_volta_editando_o_arquivo() {
+    let dir = tmp("relogio");
+    let dev = load(&dir).device;
+    save(&dir, &Saved { device: dev.clone(), last_seen: 5_000_000, ..Default::default() }).unwrap();
+    // alguém edita o licenca.json e zera o last_seen (ou apaga o arquivo e mantém o mesmo id)
+    let mut v: Value = serde_json::from_slice(&std::fs::read(dir.join(FILE)).unwrap()).unwrap();
+    v["last_seen"] = json!(0);
+    std::fs::write(dir.join(FILE), serde_json::to_vec(&v).unwrap()).unwrap();
+    assert_eq!(load(&dir).last_seen, 5_000_000, "o Cofre guarda o maior horário");
+    // outro id (outra pasta de teste) não herda o relógio deste
+    assert_eq!(load(&tmp("relogio-outro")).last_seen, 0);
+    let _ = std::fs::remove_dir_all(&dir);
+  }
+
+  #[test]
+  fn id_do_computador_vem_da_maquina() {
+    let a = device_from_guid("6f1c2a9e-0b7d-4d3e-9a51-2c8e4f0b7a11");
+    assert_eq!(a.len(), 16);
+    assert!(a.chars().all(|c| c.is_ascii_hexdigit()));
+    assert_eq!(a, device_from_guid(" 6F1C2A9E-0B7D-4D3E-9A51-2C8E4F0B7A11 "), "mesma máquina, mesmo id");
+    assert_ne!(a, device_from_guid("6f1c2a9e-0b7d-4d3e-9a51-2c8e4f0b7a12"));
+    assert!(!a.contains("6f1c"), "o GUID não aparece no id");
+    #[cfg(windows)]
+    {
+      let g = machine_guid().expect("MachineGuid do Windows");
+      assert_eq!(g.len(), 36, "{g}");
+      assert_eq!(device_from_guid(&g), device_from_guid(&machine_guid().unwrap()), "estável");
+    }
+    // na versão de desenvolvimento, o id é o aleatório da pasta de dados; na de lançamento, o da máquina
+    // (`cargo test --release --lib id_do_computador` confere o segundo caso)
+    #[cfg(windows)]
+    assert_eq!(machine_device(), if cfg!(debug_assertions) { None } else { Some(device_from_guid(&machine_guid().unwrap())) });
+  }
+
+  #[test]
+  #[cfg_attr(not(debug_assertions), ignore = "usa a chave de teste lida ao rodar, que só vale na versão de desenvolvimento")]
   fn ativa_por_email_guarda_fora_do_banco_e_renova() {
     use_test_key();
     let dir = tmp("ativa");
@@ -857,6 +992,7 @@ mod tests {
   }
 
   #[test]
+  #[cfg_attr(not(debug_assertions), ignore = "usa a chave de teste lida ao rodar, que só vale na versão de desenvolvimento")]
   fn plano_beta_sem_chave_e_gratis_com_chave() {
     use_test_key();
     let dir = tmp("plano");
@@ -871,6 +1007,7 @@ mod tests {
   }
 
   #[test]
+  #[cfg_attr(not(debug_assertions), ignore = "usa a chave de teste lida ao rodar, que só vale na versão de desenvolvimento")]
   fn colar_chave_e_sair() {
     use_test_key();
     let dir = tmp("colar");

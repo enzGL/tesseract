@@ -24,11 +24,8 @@ export async function notify(title: string, body: string): Promise<boolean> {
     if (Notification.permission !== 'granted') return false
     new Notification(title, { body }); return true
   }
-  const n = await import('@tauri-apps/plugin-notification')
-  let ok = await n.isPermissionGranted()
-  if (!ok) ok = (await n.requestPermission()) === 'granted'
-  if (ok) n.sendNotification({ title, body })
-  return ok
+  // pelo Rust (security::notify): com o app travado, o aviso sai sem detalhes ou nem sai
+  try { await call('app_notify', { title, body }); return true } catch { return false }
 }
 
 type Opp = { id: number; companyId: number; company: string; title: string; stage: string; followUpAt: string | null; followUp: string }

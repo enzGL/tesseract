@@ -15,17 +15,22 @@ export const DEFAULT_PREFS: Prefs = { notify: true, notifyFollowups: true, notif
 const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 export const todayIso = () => iso(new Date())
 
-/** Janela "Salvar como" do sistema. No navegador não há arquivo: devolve null. */
+// Janelas do sistema: abertas pelo Rust (src-tauri/src/pick.rs), que libera só o caminho escolhido
+// para os comandos que gravam ou leem arquivos. A tela não abre o diálogo por conta própria.
+
+/** Janela "Salvar como" do sistema. No navegador não há arquivo: devolve um caminho simulado. */
 export async function saveDialog(title: string, defaultPath: string, ext: string, name: string): Promise<string | null> {
   if (inBrowser) return `C:\\simulado\\${defaultPath}`
-  const { save } = await import('@tauri-apps/plugin-dialog')
-  return (await save({ title, defaultPath, filters: [{ name, extensions: [ext] }] })) ?? null
+  return call<string | null>('pick_save', { title, defaultName: defaultPath, ext, label: name })
 }
 export async function folderDialog(title: string): Promise<string | null> {
   if (inBrowser) return 'C:\\simulado'
-  const { open } = await import('@tauri-apps/plugin-dialog')
-  const r = await open({ directory: true, multiple: false, title })
-  return typeof r === 'string' ? r : null
+  return call<string | null>('pick_folder', { title })
+}
+/** Janela "Abrir" do sistema: arquivos com estas extensões (sem o ponto). */
+export async function openDialog(title: string, label: string, exts: string[], multiple = false): Promise<string[]> {
+  if (inBrowser) return []
+  return call<string[]>('pick_open', { title, label, exts, multiple })
 }
 
 // ---------- substituto do navegador ----------

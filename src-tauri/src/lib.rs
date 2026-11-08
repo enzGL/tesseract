@@ -17,6 +17,7 @@ mod common;
 mod security;
 mod tasks;
 mod update;
+mod pick;
 
 
 // ---------- Tesseract Pro (repositório privado tesseract-pro, na pasta pro/) ----------
@@ -1161,6 +1162,10 @@ fn handlers() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Send + Sync +
       app_welcome_done,
       ai_ram,
       ai_pull,
+      security::app_notify,
+      pick::pick_save,
+      pick::pick_open,
+      pick::pick_folder,
       update::update_check,
       update::update_install,
       license::license_status,

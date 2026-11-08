@@ -18,9 +18,8 @@ async function defaultRoot() {
 }
 async function pickFolder() {
   if (inBrowser) return null
-  const { open } = await import('@tauri-apps/plugin-dialog')
-  const r = await open({ directory: true, multiple: false, title: 'Escolha a pasta' })
-  return typeof r === 'string' ? r : null
+  const { folderDialog } = await import('../data/extras')
+  return folderDialog('Escolha a pasta')
 }
 
 function Banner({ title, sub, badge }: { title: string; sub: string; badge?: ReactNode }) {

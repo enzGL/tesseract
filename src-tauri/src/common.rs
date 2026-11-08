@@ -42,3 +42,34 @@ pub fn clean_tmp(tmp: &Path) -> usize {
   }
   n
 }
+
+// ---------- nomes de arquivo no Windows ----------
+
+/// Nome que o Windows trata como dispositivo (CON, NUL, COM1…, LPT1…), também com extensão
+/// ("con.md", "nul.txt") e com espaços ou pontos no fim. Gravar num desses abre o dispositivo em vez
+/// de criar o arquivo. Lista completa: CON PRN AUX NUL, COM0-9, LPT0-9 e COM¹²³/LPT¹²³.
+pub(crate) fn windows_reserved(name: &str) -> bool {
+  let base = name.split('.').next().unwrap_or("").trim_end_matches([' ', '.']).to_lowercase();
+  if ["con", "prn", "aux", "nul", "conin$", "conout$"].contains(&base.as_str()) {
+    return true;
+  }
+  let mut ch = base.chars();
+  let head: String = ch.by_ref().take(3).collect();
+  let rest: String = ch.collect();
+  (head == "com" || head == "lpt") && matches!(rest.as_str(), "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "¹" | "²" | "³")
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn nomes_reservados_do_windows() {
+    for n in ["CON", "con.md", "Nul.txt", "aux", "prn.tar.gz", "COM0", "com5", "COM9.md", "lpt4", "LPT9", "com¹", "lpt³.md", "nul .md", "con. ", "CONIN$"] {
+      assert!(windows_reserved(n), "{n}");
+    }
+    for n in ["console", "com10", "lpt", "comida.md", "nota", "conta.md", "aux2", "Nota", ""] {
+      assert!(!windows_reserved(n), "{n}");
+    }
+  }
+}

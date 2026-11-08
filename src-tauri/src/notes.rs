@@ -27,7 +27,13 @@ pub fn note_rel(p: &str) -> Res<PathBuf> {
   let path = PathBuf::from(&p);
   for c in path.components() {
     match c {
-      Component::Normal(s) if !s.to_string_lossy().starts_with('.') && !s.to_string_lossy().trim().is_empty() => {}
+      // sem pasta oculta, sem nome de dispositivo do Windows ("con.md") e sem ponto ou espaço no fim
+      // (o Windows corta e o caminho apontaria para outro arquivo)
+      Component::Normal(s)
+        if {
+          let n = s.to_string_lossy();
+          !n.starts_with('.') && !n.trim().is_empty() && !n.ends_with(['.', ' ']) && !crate::common::windows_reserved(&n)
+        } => {}
       _ => return Err(bad()),
     }
   }
@@ -256,7 +262,7 @@ mod tests {
   fn caminho_so_md_dentro_da_pasta() {
     assert!(note_rel("inbox/ideia.md").is_ok());
     assert!(note_rel("inbox\\ideia.md").is_ok());
-    for bad in ["../fora.md", "C:/x.md", "/abs.md", ".obsidian/app.md", "inbox/.oculta.md", "nota.txt", "", "a/ /b.md"] {
+    for bad in ["../fora.md", "C:/x.md", "/abs.md", ".obsidian/app.md", "inbox/.oculta.md", "nota.txt", "", "a/ /b.md", "con.md", "inbox/NUL.md", "com7/a.md", "lpt9.md", "pasta./a.md", "pasta /a.md"] {
       assert!(note_rel(bad).is_err(), "{bad}");
     }
   }

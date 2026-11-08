@@ -1,0 +1,27 @@
+[
+  {
+    "version": "0.3.0",
+    "date": "2026-11-08",
+    "seguranca": false,
+    "todos": [
+      "Conhecimento com editor próprio: escreva, organize em pastas e ligue as notas sem sair do Tesseract",
+      "[[ sugere notas enquanto você digita, e um link para nota nova cria a nota",
+      "Nota do dia pelo seu modelo e o grafo de como as notas se ligam",
+      "Vindo do Obsidian? Use o seu cofre como está; o app avisa o que é de plugin",
+      "Depois de atualizar, este resumo do que mudou",
+      "Mais segurança ao salvar e abrir arquivos, nas notificações com o app travado e nos nomes das notas"
+    ],
+    "pro": [
+      "Reforços de segurança na licença e nas automações"
+    ]
+  },
+  {
+    "version": "0.2.0",
+    "date": "2026-11-08",
+    "seguranca": false,
+    "todos": [
+      "Plano Pro com assinatura: ative por e-mail e código, sem conta"
+    ],
+    "pro": []
+  }
+]

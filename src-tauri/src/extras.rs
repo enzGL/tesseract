@@ -416,30 +416,26 @@ pub async fn extras_capture_open(app: tauri::AppHandle) {
 
 #[tauri::command]
 pub fn extras_export_all(s: State<AppDb>, dir: String, day: String) -> Res<ExportReport> {
+  let dir = crate::pick::take_folder(&dir)?; // só a pasta escolhida na janela do sistema (pick.rs)
   let c = lock(&s)?;
-  let r = export_all(&c, Path::new(&dir), &day)?;
+  let r = export_all(&c, &dir, &day)?;
   db::audit(&c, "export.all", json!({ "rows": r.rows }))?;
   Ok(r)
 }
 #[tauri::command]
 pub fn extras_ics_save(s: State<AppDb>, path: String, stamp: String) -> Res<usize> {
+  let p = crate::pick::take_save(&path, "ics")?; // só o caminho escolhido na janela do sistema (pick.rs)
   let c = lock(&s)?;
   let body = ics(&c, &stamp)?;
-  let p = PathBuf::from(&path);
-  if p.extension().and_then(|x| x.to_str()).map(|x| x.eq_ignore_ascii_case("ics")) != Some(true) {
-    return Err("salve com a extensão .ics".into());
-  }
   fs::write(&p, &body).map_err(e)?;
   Ok(body.matches("BEGIN:VEVENT").count())
 }
 #[tauri::command]
 pub fn extras_company_export(s: State<AppDb>, id: i64, path: String) -> Res<()> {
+  let p = crate::pick::take_save(&path, "json")?; // só o caminho escolhido na janela do sistema (pick.rs)
   let c = lock(&s)?;
   let data = company_data(&c, id)?;
-  if !path.to_lowercase().ends_with(".json") {
-    return Err("salve com a extensão .json".into());
-  }
-  fs::write(&path, serde_json::to_string_pretty(&data).map_err(e)?).map_err(e)?;
+  fs::write(&p, serde_json::to_string_pretty(&data).map_err(e)?).map_err(e)?;
   db::audit(&c, "lgpd.export", json!({ "company": id }))
 }
 #[tauri::command]

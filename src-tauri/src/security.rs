@@ -110,6 +110,36 @@ impl Sec {
   pub fn is_locked(&self) -> bool {
     self.0.lock().map(|i| i.locked).unwrap_or(true)
   }
+  /// App travado ou Windows bloqueado: notificação sem detalhes.
+  fn discreet(&self) -> bool {
+    self.0.lock().map(|i| i.locked || i.windows_locked).unwrap_or(true)
+  }
+}
+
+/// Notificação do Windows. Com o app travado (ou o Windows bloqueado), sai sem o conteúdo: nome de
+/// cliente, valores e tarefas não aparecem na tela de bloqueio.
+pub fn notify<R: tauri::Runtime>(app: &tauri::AppHandle<R>, title: &str, body: &str) {
+  use tauri::Manager;
+  use tauri_plugin_notification::NotificationExt;
+  let discreet = app.try_state::<Sec>().map_or(true, |s| s.discreet());
+  let (title, body) = notice_text(discreet, title, body);
+  if let Err(e) = app.notification().builder().title(title).body(body).show() {
+    log::warn!("notificação: {e}");
+  }
+}
+
+fn notice_text(discreet: bool, title: &str, body: &str) -> (String, String) {
+  if discreet {
+    return ("Tesseract".into(), "Você tem um aviso novo. Abra o Tesseract para ver.".into());
+  }
+  let cut = |s: &str, n: usize| s.chars().filter(|c| !c.is_control() || *c == '\n').take(n).collect::<String>();
+  (cut(title, 120), cut(body, 400))
+}
+
+/// Notificação pedida pela tela (lembretes). Passa pela trava como qualquer comando do app.
+#[tauri::command]
+pub fn app_notify(app: tauri::AppHandle, title: String, body: String) {
+  notify(&app, &title, &body);
 }
 
 /// Comandos que a interface pode chamar com o app travado.
@@ -780,6 +810,9 @@ pub async fn sec_hello_set(app: tauri::AppHandle, password: String, on: bool) ->
   let (s, sec) = (app.state::<AppDb>(), app.state::<Sec>());
   let (c, i) = open!(s, sec);
   let mut cfg = load(&c);
+  // o app pode ter travado enquanto o Windows Hello esperava (inatividade, Win+L): confere de novo
+  // antes de gravar
+  need_unlocked(&cfg, &i)?;
   if !on && !cfg.totp && !cfg.codes.is_empty() {
     // sem nenhum 2º fator, os códigos de recuperação não servem para nada
     cfg.codes.clear();
@@ -809,6 +842,15 @@ pub fn sec_disable(s: State<AppDb>, sec: State<Sec>, password: String) -> Res<St
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn notificacao_sem_detalhes_com_o_app_travado() {
+    let (t, b) = notice_text(true, "Follow-up: Cliente Secreto", "R$ 12.000 vence hoje");
+    assert!(!t.contains("Cliente") && !b.contains("12.000"), "{t} / {b}");
+    let (t, b) = notice_text(false, "Follow-up: Cliente", "R$ 12.000\u{7} vence");
+    assert_eq!((t.as_str(), b.as_str()), ("Follow-up: Cliente", "R$ 12.000 vence"), "destravado: o texto, sem caracteres de controle");
+    assert_eq!(notice_text(false, &"x".repeat(500), "").0.chars().count(), 120);
+  }
 
   #[test]
   fn hotp_e_totp_batem_com_a_rfc() {

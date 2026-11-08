@@ -31,3 +31,8 @@ site/downloads/
 
 # Tesseract Pro: cópia do repositório privado tesseract-pro (open core; ver src/pro-bridge.ts e src-tauri/build.rs)
 pro/
+
+# Segredos locais do wrangler (pages dev)
+.dev.vars
+# Gerado por scripts/site-headers.mjs em todo build (hash dos scripts inline das páginas)
+site/_headers
