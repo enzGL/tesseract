@@ -1,0 +1,33 @@
+node_modules
+dist
+src-tauri/target
+src-tauri/gen
+
+# Dados privados: nunca versionar (ver MASTER_SPEC.md, distribuição futura).
+src/data/seed.local.json
+*.db
+*.db-*
+*.sqlite
+.env
+.env.*
+!.env.example
+
+# banco do modo de teste (npm run teste)
+.teste-dados/
+
+# caches de build e de vídeo
+tsconfig.tsbuildinfo
+**/.hyperframes/
+
+# instalador próprio em Tauri (installer/)
+installer/src-tauri/target
+installer/src-tauri/gen
+installer/dist
+installer/release
+.wrangler/
+
+# instaladores publicados pelo site (gerados por npm run instalador; grandes demais para o git)
+site/downloads/
+
+# Tesseract Pro: cópia do repositório privado tesseract-pro (open core; ver src/pro-bridge.ts e src-tauri/build.rs)
+pro/

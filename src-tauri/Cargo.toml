@@ -1,0 +1,60 @@
+[package]
+name = "app"
+version = "0.2.0"
+description = "A Tauri App"
+authors = ["you"]
+license = "PolyForm-Noncommercial-1.0.0"
+repository = ""
+edition = "2024"
+rust-version = "1.90"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.7.4", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+tauri = { version = "2.12.5", features = [] }
+tauri-plugin-log = "2"
+tauri-plugin-dialog = "2"
+# HTTP só no Rust: Ollama local e provedor externo (com consentimento). Chave da IA no Cofre do Windows.
+ureq = { version = "2.12", features = ["json"] }
+url = "2"
+keyring = { version = "3", features = ["windows-native"] }
+rusqlite = { version = "0.41", features = ["bundled", "backup"] }
+tauri-plugin-notification = "2"
+# atualização automática: baixa o instalador novo e confere a assinatura (chave pública no tauri.conf.json)
+tauri-plugin-updater = "2"
+# backup criptografado na pasta da nuvem (fase 12): AES-256-GCM, chave derivada da senha com Argon2id
+aes-gcm = "0.10"
+argon2 = "0.5"
+sha2 = "0.10"
+# Licença do Pro: só conferir a assinatura (a chave privada fica no Worker do site).
+ed25519-dalek = "2"
+base64 = "0.22"
+# trava do app (segurança do beta): HMAC-SHA1 do TOTP (RFC 6238)
+hmac = "0.12"
+sha1 = "0.10"
+
+# Windows Hello e "Windows bloqueado" para a trava do app (mesmas versões que o Tauri já usa)
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.62", features = ["Foundation", "Security_Credentials_UI", "Win32_Foundation", "Win32_System_WinRT", "Win32_System_StationsAndDesktops", "Win32_System_SystemInformation"] }
+windows-future = "0.3"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-global-shortcut = "2"
+
+# Argon2 (trava do app e backup) sem otimização fica lento demais no tauri dev
+[profile.dev.package.argon2]
+opt-level = 3
+
+[patch.crates-io]
+# SQLite3 Multiple Ciphers no lugar do SQLite (banco criptografado). Ver vendor/libsqlite3-sys/TESSERACT_VENDOR.txt.
+libsqlite3-sys = { path = "vendor/libsqlite3-sys" }

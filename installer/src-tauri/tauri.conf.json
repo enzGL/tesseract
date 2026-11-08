@@ -1,0 +1,24 @@
+{
+  "$schema": "../../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Tesseract Setup",
+  "version": "0.2.0",
+  "identifier": "dev.tesseract.setup",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1430",
+    "beforeDevCommand": "npx vite --config vite.config.ts",
+    "beforeBuildCommand": "npx vite build --config vite.config.ts"
+  },
+  "app": {
+    "windows": [],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self' ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": false,
+    "icon": ["icons/icon.ico"],
+    "publisher": "Lanzi Labs",
+    "copyright": "© 2026 Lanzi Labs"
+  }
+}

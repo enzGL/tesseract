@@ -1,0 +1,7 @@
+{
+  "owner": "Ana Exemplo",
+  "orgs": [
+    { "id": "aurora", "name": "Aurora Studio", "projects": ["Portal Cliente", "App Agenda"] },
+    { "id": "norte", "name": "Norte Labs", "projects": ["Radar"] }
+  ]
+}

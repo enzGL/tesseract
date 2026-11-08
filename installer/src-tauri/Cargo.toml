@@ -1,0 +1,36 @@
+[package]
+name = "tesseract-setup"
+version = "0.2.0"
+description = "Instalador do Tesseract"
+authors = ["Lanzi Labs"]
+license = "PolyForm-Noncommercial-1.0.0"
+edition = "2024"
+rust-version = "1.90"
+
+# Instalador próprio (fase 13, "cartão sobre a cena"). Leva o app.exe da
+# versão de lançamento comprimido dentro dele (build.rs) e instala por usuário, sem administrador.
+# O mesmo .exe, copiado para a pasta do app como uninstall.exe, é o desinstalador (--uninstall).
+
+[build-dependencies]
+tauri-build = { version = "2.7.4", features = [] }
+zstd = "0.13"
+serde_json = "1.0"
+
+[dependencies]
+tauri = { version = "2.12.5", features = [] }
+tauri-plugin-dialog = "2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+zstd = "0.13"
+winreg = "0.55"
+mslnk = "0.1"
+dirs = "6"
+# etapa "IA no seu computador": baixa o Ollama e puxa os modelos pela API local
+ureq = { version = "2.12", features = ["json"] }
+windows-sys = { version = "0.59", features = ["Win32_System_SystemInformation"] }
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true

@@ -1,0 +1,74 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Tesseract",
+  "version": "0.2.0",
+  "identifier": "dev.tesseract.app",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Tesseract",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 1100,
+        "minHeight": 700,
+        "resizable": true,
+        "center": true,
+        "backgroundColor": "#00000000",
+        "decorations": false,
+        "transparent": true,
+        "shadow": false,
+        "dragDropEnabled": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' asset: data:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self' ipc: http://ipc.localhost"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDEwOEUxNzMzQjVDQjRFRjMKUldUelRzdTFNeGVPRUwzVXp0NUZmZjhkQy84UjZSRkhwa2FXM2IrejlQaElVMmNNT3JheWFmTHYK",
+      "endpoints": ["https://tesseract.lanzilabs.dev/downloads/latest.json"]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "publisher": "Lanzi Labs",
+    "copyright": "© 2026 Lanzi Labs",
+    "category": "Productivity",
+    "shortDescription": "Toda a sua operação, num núcleo só",
+    "longDescription": "Base de conhecimento, projetos, finanças, CRM, documentos e marketing num app local para Windows, com IA que só age com o seu ok.",
+    "homepage": "https://lanzilabs.dev",
+    "licenseFile": "../LICENSE",
+    "windows": {
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "sidebarImage": "installer/sidebar.bmp",
+        "headerImage": "installer/header.bmp",
+        "languages": [
+          "PortugueseBR",
+          "English",
+          "Spanish"
+        ],
+        "displayLanguageSelector": false,
+        "installMode": "currentUser",
+        "installerHooks": "installer/hooks.nsh"
+      }
+    }
+  }
+}
