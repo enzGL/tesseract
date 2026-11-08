@@ -65,7 +65,7 @@ Organizações, Cronograma (Gantt), OKR, Linha do tempo, CRM, Documentos e busca
 |---|---|---|---|
 | 1 | No Chat, perguntar: `o que eu já sei sobre a Padaria Sol?`. | A resposta com as notas de fonte. | "Antes da reunião, pergunte à sua base." |
 | 2 | Na ficha da empresa no CRM, ler a linha do tempo. | Os contatos e propostas anteriores. | "O histórico mostra cada conversa." |
-| 3 | Abrir a pasta da base de conhecimento no Obsidian (ou num editor de texto) e criar a nota pelo modelo `referencias/modelos/reuniao.md`. Voltar ao Tesseract e clicar em "Atualizar índice". | A nota nova aparece na busca do Conhecimento. | "As notas ficam numa pasta comum. Escreva no Obsidian. O Tesseract lê e acha." |
+| 3 | Em Conhecimento, clicar em "+", dar o nome `Reunião Padaria Sol` e criar. Escrever as decisões e digitar `[[Padaria` para ligar a nota da empresa (Enter escolhe). | A nota nova no inbox, com "salvo no arquivo" no topo e a Padaria Sol em "Esta nota liga", à direita. | "Escreva a reunião aqui mesmo. A nota é um arquivo seu e já fica ligada ao cliente." |
 | 4 | Registrar o contato no CRM e criar a tarefa com prazo pelo painel da oportunidade. | A tarefa no projeto. | "O que foi combinado vira tarefa." |
 
 ### Ep. 4: Contrato de acompanhamento e resumo mensal

@@ -978,7 +978,7 @@ function ProjectSettings({ project, board, onSave, onColumns, onArchive, onClose
             </div>
             <label className="flex flex-col gap-1 text-[13px] text-muted">Pasta na base de conhecimento (opcional)
               <input value={brainPath} onChange={(e) => setBrainPath(e.target.value)} placeholder="projetos/site-padaria-sol" className={`${field} font-mono text-[13px]`} /></label>
-            <span className="text-[12px] text-faint">Caminho dentro da base. O Tesseract só lê essa pasta; nada é movido.</span>
+            <span className="text-[12px] text-faint">Caminho dentro da base. Nada é movido.</span>
           </Section>
 
           <Section title="Quadro e projeto">

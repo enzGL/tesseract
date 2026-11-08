@@ -1,4 +1,4 @@
-// Índice do segundo cérebro: lê as notas .md do vault (só leitura), corta em trechos e guarda no SQLite
+// Índice do Conhecimento: lê as notas .md da pasta (o editor fica em notes.rs), corta em trechos e guarda no SQLite
 // com busca textual FTS5. Incremental: só reprocessa nota nova ou alterada (data e tamanho) e tira do
 // índice o que sumiu do disco. O vault é a fonte da verdade; o índice pode ser refeito a qualquer hora.
 use rusqlite::{params, Connection, OptionalExtension};
@@ -300,6 +300,8 @@ pub struct NoteView {
   pub content: String,
   /// Notas que apontam para esta ([[links]] de volta).
   pub backlinks: Vec<(String, String)>,
+  /// Data do arquivo quando foi lido: o editor manda de volta ao salvar (não pisa em mudança de fora).
+  pub mtime: Option<i64>,
 }
 
 /// Lê uma nota do vault (só dentro dele) e as que ligam a ela.
@@ -316,7 +318,8 @@ pub fn read(c: &Connection, root: &Path, rel: &str) -> Res<NoteView> {
     .prepare("SELECT DISTINCT n.path, n.title FROM note_links l JOIN notes n ON n.id = l.note_id WHERE (l.target = ?1 OR l.target = ?2) AND n.path <> ?3 ORDER BY n.title LIMIT 50")
     .map_err(e)?;
   let backlinks = st.query_map(params![stem, name, rel], |r| Ok((r.get(0)?, r.get(1)?))).map_err(e)?.flatten().collect();
-  Ok(NoteView { path: rel.to_string(), title, content, backlinks })
+  let mtime = crate::notes::file_mtime(root, rel);
+  Ok(NoteView { path: rel.to_string(), title, content, backlinks, mtime })
 }
 
 /// Caminho da nota para um [[link]] do Obsidian: caminho exato, nome do arquivo em qualquer pasta

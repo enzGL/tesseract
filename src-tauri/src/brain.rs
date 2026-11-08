@@ -1,7 +1,7 @@
-// Cria o segundo cérebro da pessoa: uma pasta de arquivos Markdown que abre no Obsidian.
+// Cria a base de conhecimento da pessoa: uma pasta de arquivos Markdown, dela, que abre em qualquer editor.
 // O conteúdo vem do front (src/data/brain.ts); aqui ficam as garantias:
 //   - só escreve dentro da pasta escolhida (caminhos relativos, sem "..", sem unidade);
-//   - só .md, e .json dentro de .obsidian/ (configuração do Obsidian);
+//   - só .md, e .json dentro de .obsidian/ (aceito por compatibilidade; a base nova não cria essa pasta);
 //   - a pasta precisa estar vazia ou não existir, e nenhum arquivo é sobrescrito.
 use serde::{Deserialize, Serialize};
 use std::fs::{self, OpenOptions};

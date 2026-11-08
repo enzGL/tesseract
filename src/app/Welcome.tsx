@@ -39,7 +39,7 @@ export function Welcome({ onChoose, vault }: { onChoose: (c: WelcomeChoice) => v
         <div className="mt-1.5 flex max-w-[640px] flex-col gap-2.5">
           {vault && <Option icon={BookOpenCheck} recommended title="Continuar com a minha base" body={`Seus dados e a pasta ${folder ?? vault} continuam aqui.`} onClick={() => onChoose('keep')} />}
           <Option icon={Sparkles} recommended={!vault} title={vault ? 'Criar uma base nova' : 'Criar minha base de conhecimento'} body="Quatro perguntas e ele monta pastas, modelos e o guia." onClick={() => onChoose('create')} />
-          <Option icon={FolderOpen} title={vault ? 'Conectar outra pasta' : 'Conectar uma pasta que já existe'} body="Seu vault do Obsidian ou qualquer pasta de notas em Markdown." onClick={() => onChoose('connect')} />
+          <Option icon={FolderOpen} title={vault ? 'Conectar outra pasta' : 'Conectar uma pasta que já existe'} body="Qualquer pasta de notas em Markdown. Vindo do Obsidian? Traga o seu cofre como está." onClick={() => onChoose('connect')} />
           {!vault && <button type="button" onClick={() => onChoose('skip')} className="group flex items-center rounded-[14px] px-5 py-3 text-left text-[14px] text-muted hover:text-fg">
             Começar sem notas por enquanto <ArrowRight size={14} className="ml-1.5 text-link transition-transform group-hover:translate-x-0.5" />
           </button>}

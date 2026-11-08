@@ -9,11 +9,11 @@ type Step = { id: string; title: string; why: string; how: string[]; example?: s
 export const GUIDE: Step[] = [
   { id: 'criar', title: 'Crie ou conecte sua base de conhecimento',
     why: 'Tudo começa com um lugar fixo. Uma pasta no seu computador, com uma estrutura que diz onde cada coisa vai.',
-    how: ['Em Conhecimento, escolha "Criar minha base de conhecimento" e responda quatro perguntas.', 'Já usa Obsidian? Escolha "Já tenho uma" e aponte para a pasta.', 'Leia o LEIA-ME.md que foi criado: ele é o mapa da sua base.'],
+    how: ['Em Conhecimento, escolha "Criar minha base de conhecimento" e responda quatro perguntas.', 'Já tem notas, por exemplo um cofre do Obsidian? Escolha "Já tenho uma" e aponte para a pasta.', 'Leia o LEIA-ME.md que foi criado: ele é o mapa da sua base.'],
     action: { to: '/cerebro', label: 'Ir para Conhecimento' } },
   { id: 'capturar', title: 'Capture tudo no inbox',
     why: 'A cabeça é boa para ter ideias, não para guardar. Anotar sem decidir onde vai tira o peso de organizar na hora.',
-    how: ['Ideia, tarefa, link, frase de reunião: vira uma nota em inbox/.', 'Não pense na pasta certa agora. Só escreva.', 'No Obsidian, nota nova já cai no inbox (configurado pelo Tesseract).'],
+    how: ['Ideia, tarefa, link, frase de reunião: vira uma nota em inbox/.', 'Não pense na pasta certa agora. Só escreva.'],
     example: 'inbox/2026-11-03-ideia-de-preco.md: "cobrar por projeto em vez de por hora?"' },
   { id: 'diario', title: 'Escreva a nota do dia',
     why: 'Três linhas por dia viram um histórico que responde "quando foi que decidi isso?" meses depois.',

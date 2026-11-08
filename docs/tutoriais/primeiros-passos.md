@@ -56,7 +56,7 @@ Todos os nomes, valores e empresas deste roteiro são de exemplo.
 | 8 | Passo "Primeiro, quem é você?": digitar `Ana Exemplo` e `Designer freelancer em Curitiba`. Clicar em "Continuar". | O passo seguinte. | "Seu nome e o que você faz viram a primeira linha da base." |
 | 9 | Passo "Para que vai usar?": marcar "Vida pessoal", "Trabalho" e "Empresa ou clientes". Clicar em "Continuar". | As caixas marcadas em azul. | "Cada escolha cria as pastas certas. Dá para mudar depois." |
 | 10 | Passo "Onde você atua?": digitar `Estúdio Ana Exemplo` e clicar em "Adicionar". Clicar em "Continuar". | O nome aparece como etiqueta. | "Empresas e clientes fixos ganham uma pasta e um espaço próprio." |
-| 11 | Passo "Onde salvar?": clicar em "Escolher" e apontar a pasta vazia. | O caminho da pasta no campo. | "É uma pasta comum, com arquivos de texto. Abre até no Obsidian." |
+| 11 | Passo "Onde salvar?": clicar em "Escolher" e apontar a pasta vazia. | O caminho da pasta no campo. | "É uma pasta comum, com arquivos de texto. São seus e abrem em qualquer editor." |
 | 12 | Clicar em "Criar minha base de conhecimento". | A base criada, com o `LEIA-ME.md` e as pastas. | "Pronto. Sua base já tem estrutura, modelos e um guia." |
 
 Quem não se encaixa em nenhum modelo escolhe "Montar do zero" (todos os módulos no menu) ou "Pular e manter tudo como está", no topo da tela. O Ep. 9 mostra como mudar o Início e o menu depois.
@@ -75,7 +75,8 @@ Quem não se encaixa em nenhum modelo escolhe "Montar do zero" (todos os módulo
 | 2 | Escolher "Freelancer" e clicar em "Montar meu Tesseract" (a escolha do modelo está no Ep. 2). | A tela "Conectar as notas que você já tem". | "Escolha o que você faz e siga para as notas." |
 | 3 | Clicar em "Escolher", apontar a pasta e clicar em "Verificar". | A confirmação de que a pasta existe. | "O Tesseract só lê a pasta. Não muda nada nela." |
 | 4 | Clicar em "Usar esta pasta". | A tela Conhecimento com "Conectado" e a busca. | "Conectado." |
-| 5 | Digitar uma palavra no campo "Buscar nas suas notas" e clicar em "Atualizar índice". | As notas que têm a palavra. | "A busca por texto já funciona, mesmo sem internet." |
+| 5 | Clicar em "Atualizar índice" e digitar uma palavra no campo "Buscar nas suas notas" (no exemplo, `logo`). | As notas que têm a palavra. | "A busca por texto já funciona, mesmo sem internet." |
+| 6 | Clicar numa nota da lista. | A nota aberta ao lado da lista. | "Clique numa nota para ler ali mesmo." |
 
 Mostrar também, em 5 segundos, a terceira opção da Boas-vindas: "Começar sem notas por enquanto". Ela também passa por "O que você faz?" e depois abre o Início. Legenda: "Pode começar sem notas e criar depois."
 

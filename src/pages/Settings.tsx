@@ -124,7 +124,7 @@ function Vault() {
   const save = async () => { await setSetting('vault.path', path.trim()) }
 
   return (
-    <Card title="Conhecimento" desc="Pasta da sua base de conhecimento (vault do Obsidian ou notas .md). O Tesseract só lê, indexa e busca por texto e por significado."
+    <Card title="Conhecimento" desc="Pasta da sua base de conhecimento (notas .md; um cofre do Obsidian também serve). Você lê e escreve as notas em Conhecimento; o Tesseract indexa e busca por texto e, no Pro, por significado."
       aside={saved ? <Badge tone="ok">Definido</Badge> : <Badge tone="muted">Não definido</Badge>}>
       <div className="flex flex-wrap gap-2">
         <label className="min-w-0 flex-1"><span className="sr-only">Caminho do vault</span>
@@ -134,7 +134,7 @@ function Vault() {
         <Button variant="primary" onClick={save}>Salvar</Button>
       </div>
       {check && (check.exists
-        ? <Note tone="ok">{check.capped ? 'Mais de ' : ''}{check.notes.toLocaleString('pt-BR')} notas .md{check.obsidian ? ' · vault do Obsidian' : ' · pasta sem .obsidian (funciona, mas confira o caminho)'}</Note>
+        ? <Note tone="ok">{check.capped ? 'Mais de ' : ''}{check.notes.toLocaleString('pt-BR')} notas .md{check.obsidian ? ' · veio do Obsidian' : ''}</Note>
         : <Note tone="error">Pasta não encontrada.</Note>)}
       {saved && path.trim() !== saved && <Note>Alteração não salva.</Note>}
       <label className="flex items-start gap-2 text-[14px]">

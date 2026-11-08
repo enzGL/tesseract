@@ -7,6 +7,7 @@ mod brain;
 mod db;
 mod finance;
 mod index;
+mod notes;
 mod scrum;
 mod semantic;
 mod shape;
@@ -435,6 +436,65 @@ fn brain_read(s: State<AppDb>, path: String) -> Res<index::NoteView> {
   let c = lock(&s)?;
   let (root, _) = vault_root(&c)?;
   index::read(&c, &root, &path)
+}
+
+// ---------- Editor do Conhecimento (Grátis): escrever, criar, nota do dia, grafo ----------
+
+/// Depois de escrever, o índice é atualizado (incremental) para a árvore, a busca e o grafo verem a mudança.
+fn reindex(c: &mut Connection) -> Res<()> {
+  let (root, sensitive) = vault_root(c)?;
+  index::run(c, &root, sensitive).map(|_| ())
+}
+
+#[tauri::command]
+fn notes_list(s: State<AppDb>) -> Res<Vec<notes::Item>> {
+  notes::list(&*lock(&s)?)
+}
+
+#[tauri::command]
+fn note_write(s: State<AppDb>, path: String, content: String, base: Option<i64>) -> Res<i64> {
+  let mut c = lock(&s)?;
+  let (root, _) = vault_root(&c)?;
+  let m = notes::write(&root, &path, &content, base)?;
+  reindex(&mut c)?;
+  Ok(m)
+}
+
+#[tauri::command]
+fn note_create(s: State<AppDb>, path: String, content: String) -> Res<()> {
+  let mut c = lock(&s)?;
+  let (root, _) = vault_root(&c)?;
+  notes::create(&root, &path, &content)?;
+  reindex(&mut c)?;
+  db::audit(&c, "note.create", json!({ "path": path }))
+}
+
+#[tauri::command]
+fn note_daily(s: State<AppDb>, day: String) -> Res<String> {
+  let mut c = lock(&s)?;
+  let (root, _) = vault_root(&c)?;
+  let (path, created) = notes::daily(&root, &day)?;
+  if created {
+    reindex(&mut c)?;
+  }
+  Ok(path)
+}
+
+#[tauri::command]
+fn notes_graph(s: State<AppDb>) -> Res<notes::Graph> {
+  notes::graph(&*lock(&s)?)
+}
+
+#[tauri::command]
+fn note_links(s: State<AppDb>, path: String) -> Res<Vec<(String, Option<String>)>> {
+  notes::links_of(&*lock(&s)?, &path)
+}
+
+#[tauri::command]
+fn notes_plugins(s: State<AppDb>) -> Res<notes::Plugins> {
+  let c = lock(&s)?;
+  let (root, _) = vault_root(&c)?;
+  notes::plugins(&c, &root)
 }
 
 /// Caminho da nota de um [[link]] (ou nada, se ela não existe no índice).
@@ -1141,6 +1201,13 @@ fn handlers() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Send + Sync +
       brain_read,
       brain_stats,
       brain_resolve,
+      notes_list,
+      note_write,
+      note_create,
+      note_daily,
+      notes_graph,
+      note_links,
+      notes_plugins,
       ai_status,
       brain_embed_step,
       brain_search_hybrid,

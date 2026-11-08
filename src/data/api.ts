@@ -20,7 +20,7 @@ export type VaultCheck = { exists: boolean; obsidian: boolean; notes: number; ca
 export type IndexReport = { scanned: number; added: number; updated: number; removed: number; notes: number; chunks: number; ms: number }
 // snippet: o termo encontrado vem entre  e  (ver Highlight em pages/Brain.tsx)
 export type Hit = { path: string; title: string; heading: string | null; snippet: string }
-export type NoteView = { path: string; title: string; content: string; backlinks: [string, string][] }
+export type NoteView = { path: string; title: string; content: string; backlinks: [string, string][]; mtime?: number | null }
 export type LocalModel = { name: string; embedding: boolean }
 // ---------- Projetos e tarefas (fase 4A) ----------
 export type MethodId = 'kanban' | 'lista' | 'foco' | 'eisenhower' | 'gtd' | 'scrum' | 'okr' | 'shapeup' | 'priorizacao' | 'cronograma'
@@ -184,6 +184,13 @@ const browser: Record<string, (a: Record<string, unknown>) => unknown> = {
   brain_search: () => [],
   brain_stats: () => ({ notes: 0, chunks: 0 }),
   brain_read: () => { throw new Error('Ler notas só funciona no app.') },
+  notes_list: () => [],
+  notes_graph: () => ({ nodes: [], edges: [] }),
+  notes_plugins: () => ({ notes: [], canvas: 0 }),
+  note_links: () => [],
+  note_write: () => { throw new Error('Escrever notas só funciona no app.') },
+  note_create: () => { throw new Error('Escrever notas só funciona no app.') },
+  note_daily: () => { throw new Error('Escrever notas só funciona no app.') },
   brain_search_hybrid: () => ({ hits: [], semantic: false }),
   ai_status: () => ({ ollama: false, ollamaError: 'navegador: sem Ollama', models: [], embedReady: false, vectorsDone: 0, vectorsTotal: 0, keys: {} }),
   brain_embed_step: () => ({ done: 0, total: 0, embedded: 0 }),

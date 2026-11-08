@@ -1,6 +1,6 @@
 // Monta o segundo cérebro de uma pessoa a partir das respostas do assistente (pages/Brain.tsx).
 // Só gera textos; quem grava no disco, com as garantias de segurança, é o Rust (src-tauri/src/brain.rs).
-// O formato é Markdown puro com [[links]]: abre no Obsidian e em qualquer editor, e é da pessoa.
+// O formato é Markdown puro com [[links]]: arquivos da pessoa, que abrem em qualquer editor de texto.
 
 export type Area = 'pessoal' | 'trabalho' | 'clientes' | 'estudos' | 'conteudo'
 export type Profile = { name: string; role: string; areas: Area[]; orgs: string[] }
@@ -195,10 +195,6 @@ Uma base de conhecimento (o que muita gente chama de segundo cérebro) é um lug
 ## Exemplo de ligação
 [[pessoas/${me}]] → [[projetos/${first}/overview]] → [[diario/${day}]]
 ` },
-    // Configuração do Obsidian: nota do dia em diario/ com o modelo, modelos em referencias/modelos, novas notas no inbox.
-    { path: '.obsidian/daily-notes.json', content: JSON.stringify({ folder: 'diario', format: 'YYYY-MM-DD', template: 'referencias/modelos/diario' }, null, 2) },
-    { path: '.obsidian/templates.json', content: JSON.stringify({ folder: 'referencias/modelos' }, null, 2) },
-    { path: '.obsidian/app.json', content: JSON.stringify({ newFileLocation: 'folder', newFileFolderPath: 'inbox', attachmentFolderPath: 'referencias/anexos' }, null, 2) },
   ]
   if (has('reunioes')) files.push({ path: 'reunioes/LEIA-ME.md', content: 'Notas de reunião. Use o modelo [[referencias/modelos/reuniao]] e nomeie como AAAA-MM-DD-assunto.\n' })
 

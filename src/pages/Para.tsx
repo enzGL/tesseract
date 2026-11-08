@@ -7,7 +7,7 @@ import { method } from '../data/methods'
 
 // PARA (fase 4B-2c, proposta aprovada): todos os projetos, de todos os escopos, em quatro gavetas.
 // Projetos têm fim; áreas não acabam; recursos são assuntos de consulta; arquivo é o que terminou.
-// Cada item pode apontar a pasta dele no segundo cérebro. O app só lê o cérebro: arquivar aqui não move a pasta.
+// Cada item pode apontar a pasta dele na base de conhecimento. Arquivar aqui não move a pasta.
 
 type Drawer = ParaKind | 'archive'
 const DRAWERS: [Drawer, string, string][] = [
@@ -68,7 +68,7 @@ export function ParaView({ projects, scopeName, onOpen, onMove }: {
         </div>
         <DragOverlay>{active ? <div className="kcard w-[240px] rotate-1 rounded-[10px] border px-3 py-2.5 text-[13.5px] font-medium shadow-xl">{active.name}</div> : null}</DragOverlay>
       </DndContext>
-      <p className="text-[12.5px] text-muted">A pasta de cada item na base de conhecimento se escolhe em Configurar, dentro do projeto. O Tesseract só lê a base: arquivar aqui não move nem apaga a pasta. Para arquivar as notas também, mova a pasta para <span className="font-mono">arquivo/</span> no Obsidian ou no Explorador de Arquivos.</p>
+      <p className="text-[12.5px] text-muted">A pasta de cada item na base de conhecimento se escolhe em Configurar, dentro do projeto. Arquivar aqui não move nem apaga a pasta. Para arquivar as notas também, mova a pasta para <span className="font-mono">arquivo/</span> no Obsidian ou no Explorador de Arquivos.</p>
     </div>
   )
 }

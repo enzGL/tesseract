@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { Link, useSearchParams } from 'react-router'
-import { ArrowLeft, ArrowRight, BookOpen, Check, FolderOpen, FolderPlus, FolderSearch, Plus, RefreshCw, Search, Sparkles, X } from 'lucide-react'
+import { useSearchParams } from 'react-router'
+import { ArrowLeft, ArrowRight, Check, FolderOpen, FolderPlus, FolderSearch, Plus, Sparkles, X } from 'lucide-react'
 import { Badge, Button } from '../components/ui'
-import { call, inBrowser, indexBrain, message, reload, setSetting, useStore, type Hit, type NoteView, type Org, type VaultCheck } from '../data/api'
+import { call, inBrowser, indexBrain, message, reload, setSetting, useStore, type Org, type VaultCheck } from '../data/api'
 import { AREAS, plan, slug, tree, type Area, type Profile } from '../data/brain'
 import { useTheme } from '../app/theme'
-import { Markdown, plainText } from '../components/Markdown'
+import { Knowledge } from '../components/Knowledge'
 
 const LIGHT = import.meta.glob<string>('../assets/art/4.png', { eager: true, import: 'default' })
 const DARK = import.meta.glob<string>('../assets/art-dark/4.png', { eager: true, import: 'default' })
@@ -62,7 +62,7 @@ function Connect({ onBack }: { onBack: () => void }) {
   return (
     <div className="anim-rise flex max-w-2xl flex-col gap-4">
       <h2 className="text-[20px] font-semibold">Conectar as notas que você já tem</h2>
-      <p className="text-[14.5px] text-muted">Aponte para a pasta do seu vault (Obsidian ou qualquer pasta com notas .md). O Tesseract só lê; nada é movido nem alterado.</p>
+      <p className="text-[14.5px] text-muted">Aponte para a sua pasta de notas .md. Vindo do Obsidian? Escolha a pasta do cofre. Nada é copiado nem convertido: o Tesseract lê e escreve os mesmos arquivos .md.</p>
       <div className="flex gap-2">
         <label className="flex-1"><span className="sr-only">Pasta do vault</span>
           <input value={path} onChange={(e) => { setPath(e.target.value); setCheck(null) }} placeholder="C:\Users\voce\Documents\vault" className={`${field} font-mono text-[13px]`} />
@@ -72,7 +72,7 @@ function Connect({ onBack }: { onBack: () => void }) {
       </div>
       {error && <p className="text-[13.5px] text-[#B3261E]" role="alert">{error}</p>}
       {check && (check.exists
-        ? <p className="text-[13.5px] text-ok">{check.capped ? 'Mais de ' : ''}{check.notes.toLocaleString('pt-BR')} notas .md{check.obsidian ? ' · vault do Obsidian' : ''}</p>
+        ? <p className="text-[13.5px] text-ok">{check.capped ? 'Mais de ' : ''}{check.notes.toLocaleString('pt-BR')} notas .md{check.obsidian ? ' · veio do Obsidian' : ''}</p>
         : <p className="text-[13.5px] text-[#B3261E]">Pasta não encontrada.</p>)}
       <div className="flex gap-2">
         <Button variant="ghost" icon={ArrowLeft} onClick={onBack}>Voltar</Button>
@@ -189,7 +189,7 @@ function Wizard({ onBack }: { onBack: () => void }) {
         {step === 3 && (
           <div className="flex flex-col gap-4">
             <h2 className="font-serif text-[28px]">Onde salvar?</h2>
-            <p className="text-[14.5px] text-muted">Uma pasta comum no seu computador, com arquivos de texto (.md). Abre no Obsidian e em qualquer editor. Se um dia sair do Tesseract, leve a pasta com você.</p>
+            <p className="text-[14.5px] text-muted">Uma pasta comum no seu computador, com arquivos de texto (.md). São seus: abrem em qualquer editor e, se um dia sair do Tesseract, você leva a pasta.</p>
             <div className="flex gap-2">
               <label className="flex-1"><span className="sr-only">Pasta</span>
                 <input value={root} onChange={(e) => { setRoot(e.target.value); setRootError(null) }} onBlur={() => checkRoot()} className={`${field} font-mono text-[13px]`} />
@@ -223,108 +223,6 @@ function Wizard({ onBack }: { onBack: () => void }) {
   )
 }
 
-// ---------- Cérebro conectado: busca e leitura ----------
-
-// Marca o termo encontrado (\u0002 ... \u0003 vindos do FTS5) sem usar HTML.
-export function Highlight({ text }: { text: string }) {
-  const parts = text.split(/(\u0002[^\u0003]*\u0003)/g)
-  return <>{parts.map((p, i) => p.startsWith('\u0002') ? <mark key={i} className="rounded bg-accent-soft px-0.5 text-link">{p.slice(1, -1)}</mark> : <span key={i}>{p}</span>)}</>
-}
-
-function NoteReader({ path, onOpen, onClose }: { path: string; onOpen: (p: string) => void; onClose: () => void }) {
-  const [note, setNote] = useState<NoteView | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  useEffect(() => { setNote(null); setError(null); call<NoteView>('brain_read', { path }).then(setNote).catch((e) => setError(message(e))) }, [path])
-  return (
-    <article className="anim-rise flex min-w-0 flex-col rounded-xl border border-line bg-card" aria-label="Nota">
-      <header className="flex items-start justify-between gap-3 border-b border-line px-5 py-4">
-        <div className="min-w-0"><h2 className="truncate font-serif text-[22px]">{note?.title ?? '…'}</h2><p className="truncate font-mono text-[12px] text-faint">{path}</p></div>
-        <Button variant="ghost" icon={X} ariaLabel="Fechar nota" onClick={onClose} />
-      </header>
-      {error && <p className="p-5 text-[13.5px] text-[#B3261E]" role="alert">{error}</p>}
-      {note && (
-        <>
-          <div className="max-h-[560px] overflow-auto px-5 py-4">
-            <Markdown source={note.content} hideTitle={note.title} onLink={(t) => { call<string | null>('brain_resolve', { target: t }).then((p) => { if (p) onOpen(p); else setError(`A nota "${t}" ainda não existe na base.`) }) }} />
-          </div>
-          {note.backlinks.length > 0 && (
-            <footer className="border-t border-line px-5 py-4">
-              <p className="text-[12.5px] text-faint">Notas que ligam a esta</p>
-              <ul className="mt-2 flex flex-wrap gap-2">
-                {note.backlinks.map(([p, t]) => <li key={p}><button type="button" onClick={() => onOpen(p)} className="rounded-md bg-raised px-2.5 py-1 text-[13px] text-link hover:bg-hover">{t}</button></li>)}
-              </ul>
-            </footer>
-          )}
-        </>
-      )}
-    </article>
-  )
-}
-
-function Connected({ path }: { path: string }) {
-  const { index } = useStore()
-  const [check, setCheck] = useState<VaultCheck | null>(null)
-  const [q, setQ] = useState('')
-  const [hits, setHits] = useState<Hit[]>([])
-  const [open, setOpen] = useState<string | null>(null)
-  const [semantic, setSemantic] = useState(false)
-  // o chat abre uma fonte aqui: /cerebro?nota=caminho.md
-  const [params] = useSearchParams()
-  const nota = params.get('nota')
-  useEffect(() => { if (nota) setOpen(nota) }, [nota])
-  const { embed } = useStore()
-  useEffect(() => { call<VaultCheck>('vault_check', { path }).then(setCheck).catch(() => setCheck(null)) }, [path])
-  // busca enquanto digita (pequena espera para não consultar a cada tecla)
-  useEffect(() => {
-    if (!q.trim()) { setHits([]); return }
-    let alive = true
-    // texto na hora; texto + significado (vetores locais) logo depois, substituindo
-    const t1 = setTimeout(() => { call<Hit[]>('brain_search', { query: q, limit: 30 }).then((h) => { if (alive) { setHits(h); setSemantic(false) } }).catch(() => setHits([])) }, 120)
-    const t2 = setTimeout(() => { call<{ hits: Hit[]; semantic: boolean }>('brain_search_hybrid', { query: q, limit: 30 }).then((r) => { if (alive && r.semantic) { setHits(r.hits); setSemantic(true) } }).catch(() => undefined) }, 500)
-    return () => { alive = false; clearTimeout(t1); clearTimeout(t2) }
-  }, [q, index.last])
-
-  const last = index.last
-  return (
-    <div className="anim-rise flex flex-col gap-6">
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-line bg-card p-5"><p className="text-[14px] text-muted">Notas no índice</p><p className="mt-2 text-[26px] font-semibold">{last ? last.notes.toLocaleString('pt-BR') : index.running ? '…' : '—'}</p>
-          <p className="mt-1 text-[12.5px] text-faint">{index.running ? 'Indexando…' : last ? `${last.chunks.toLocaleString('pt-BR')} trechos · ${last.ms} ms` : ''}</p>
-          {embed.total > 0 && <p className="mt-0.5 text-[12.5px] text-faint">{embed.running ? `Busca por significado: ${embed.done} de ${embed.total}` : embed.done >= embed.total ? 'Busca por significado ligada' : `Por significado: ${embed.done} de ${embed.total}`}</p>}</div>
-        <div className="rounded-xl border border-line bg-card p-5 sm:col-span-2"><p className="text-[14px] text-muted">Pasta</p><p className="mt-2 truncate font-mono text-[13px]" title={path}>{path}</p>
-          {check && !check.exists && <p className="mt-1 text-[13px] text-[#B3261E]">Pasta não encontrada. Ela foi movida? Troque em Configurações.</p>}
-          {index.error && <p className="mt-1 text-[13px] text-[#B3261E]" role="alert">{index.error}</p>}</div>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        <label className="flex h-11 min-w-[280px] flex-1 items-center gap-2 rounded-lg border border-line-strong bg-raised px-3.5 focus-within:border-accent">
-          <Search size={16} className="text-muted" /><span className="sr-only">Buscar no Conhecimento</span>
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar nas suas notas: pessoa, projeto, decisão…" className="h-full flex-1 bg-transparent text-[14.5px] outline-none placeholder:text-faint" />
-        </label>
-        <Button icon={RefreshCw} onClick={() => indexBrain()}>{index.running ? 'Indexando…' : 'Atualizar índice'}</Button>
-        <Link to="/guia" className="inline-flex h-10 items-center gap-2 self-center rounded-lg border border-line-strong bg-raised px-4 text-[14px] font-medium hover:bg-hover"><BookOpen size={16} />Guia</Link>
-      </div>
-
-      <div className={`grid gap-4 ${open ? 'lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]' : ''}`}>
-        <div className="flex min-w-0 flex-col gap-2">
-          {q.trim() && hits.length === 0 && <p className="rounded-xl border border-line bg-card p-5 text-[14px] text-muted">Nada encontrado para "{q}".</p>}
-          {!q.trim() && <p className="text-[14px] leading-relaxed text-muted">Busca por texto e, com o Ollama ligado, por significado: "quanto cobrei" acha a nota que fala de orçamento. Para perguntar e receber resposta com fonte, use o chat (Ctrl+J).</p>}
-          {q.trim() && hits.length > 0 && <p className="text-[12.5px] text-faint">{semantic ? 'Por texto e por significado' : 'Por texto'}</p>}
-          {hits.map((h) => (
-            <button key={h.path} type="button" onClick={() => setOpen(h.path)}
-              className={`anim-rise rounded-xl border bg-card p-4 text-left transition-colors hover:border-accent ${open === h.path ? 'border-accent' : 'border-line'}`}>
-              <span className="block text-[15px] font-medium">{h.title}{h.heading && h.heading !== h.title && <span className="font-normal text-muted"> · {h.heading}</span>}</span>
-              <span className="mt-1 block truncate font-mono text-[11.5px] text-faint">{h.path}</span>
-              <span className="mt-2 line-clamp-3 block text-[13.5px] leading-relaxed text-muted"><Highlight text={plainText(h.snippet)} /></span>
-            </button>
-          ))}
-        </div>
-        {open && <NoteReader path={open} onOpen={setOpen} onClose={() => setOpen(null)} />}
-      </div>
-    </div>
-  )
-}
-
 export function Brain() {
   const { ready, settings } = useStore()
   // a boas-vindas da primeira abertura chega com ?modo=criar ou ?modo=conectar
@@ -335,18 +233,21 @@ export function Brain() {
   const path = settings['vault.path']
   const created = mode === 'create' && path
 
+  // base conectada: o editor ocupa a tela toda (pastas | nota | ligações)
+  if (ready && path) return <Knowledge vault={path} initial={params.get('nota')} />
+
   return (
     <div className="min-h-full">
       <Banner
-        badge={path ? <Badge tone="ok">Conectado</Badge> : <Badge tone="muted">Fase 2.5</Badge>}
-        title={created ? 'Sua base de conhecimento está pronta.' : path ? 'Conhecimento' : 'Monte sua base de conhecimento'}
-        sub={path ? 'Uma pasta de notas no seu computador, organizada para você lembrar de tudo sem carregar tudo na cabeça.' : 'Um lugar fora da cabeça para o que você sabe, decide e precisa lembrar. O Tesseract monta a estrutura com você em quatro passos.'}
+        badge={<Badge tone="muted">Conhecimento</Badge>}
+        title={created ? 'Sua base de conhecimento está pronta.' : 'Monte sua base de conhecimento'}
+        sub={'Um lugar fora da cabeça para o que você sabe, decide e precisa lembrar. O Tesseract monta a estrutura com você em quatro passos.'}
       />
       <div className="mx-auto max-w-[1100px] px-16 py-10">
-        {!ready ? null : path ? <Connected path={path} /> : mode === 'create' ? <Wizard onBack={() => setMode('choose')} /> : mode === 'connect' ? <Connect onBack={() => setMode('choose')} /> : (
+        {!ready ? null : mode === 'create' ? <Wizard onBack={() => setMode('choose')} /> : mode === 'connect' ? <Connect onBack={() => setMode('choose')} /> : (
           <div className="grid gap-4 md:grid-cols-2">
             <Choice icon={FolderPlus} title="Criar minha base de conhecimento" body="Responda quatro perguntas. O Tesseract cria as pastas, um guia de onde guardar cada coisa, modelos de nota e exemplos ligados entre si." onClick={() => setMode('create')} />
-            <Choice icon={FolderSearch} title="Já tenho uma" body="Conecte a pasta do seu vault (Obsidian ou notas .md). O Tesseract só lê; nada muda nos seus arquivos." onClick={() => setMode('connect')} />
+            <Choice icon={FolderSearch} title="Já tenho uma" body="Conecte a sua pasta de notas .md, inclusive um cofre do Obsidian. Os arquivos ficam onde estão; o Tesseract lê e escreve neles." onClick={() => setMode('connect')} />
           </div>
         )}
       </div>
