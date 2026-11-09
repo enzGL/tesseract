@@ -11,8 +11,10 @@ export type SyncStatus = {
   devices: Device[]; max: number; otherOpen: string | null
   lastAt: string; lastAction: string; lastError: string
   mergedAt: string; mergedFrom: string; mergedAuto: number; conflicts: ConflictView[]; behind: boolean
+  /** o outro já gravou, mas o arquivo da versão dele ainda não chegou na pasta daqui (nome dele) */
+  arriving: string | null
 }
-export type Outcome = { action: 'pull' | 'push' | 'merge' | 'nothing' | 'waiting' | 'removed' | 'off'; conflicts: number; mergedAuto: number; from: string }
+export type Outcome = { action: 'pull' | 'push' | 'merge' | 'nothing' | 'waiting' | 'arriving' | 'removed' | 'off'; conflicts: number; mergedAuto: number; from: string }
 
 const COLS: Record<string, string> = {
   name: 'Nome', title: 'Título', city: 'Cidade', phone: 'Telefone', email: 'E-mail', notes: 'Notas', description: 'Descrição',
@@ -39,6 +41,7 @@ export function outcomeText(o: Outcome): string {
     case 'merge': return `Os dois mexeram: ${o.mergedAuto} ${o.mergedAuto === 1 ? 'mudança juntada' : 'mudanças juntadas'} sozinhas${o.conflicts ? ` e ${o.conflicts} no mesmo item para você ver` : ''}.`
     case 'push': return 'Gravado na pasta. O outro computador pega ao abrir.'
     case 'waiting': return 'Há mudanças aqui; elas vão para a pasta ao fechar ou em "Passar a vez agora".'
+    case 'arriving': return `A versão de ${o.from || 'outro computador'} ainda está chegando pela pasta. Este pega assim que ela aparecer.`
     case 'removed': return 'Este computador foi removido no outro. A sincronização foi desligada aqui.'
     case 'off': return 'Dois computadores está desligado.'
     default: return 'Em dia: nada novo na pasta.'

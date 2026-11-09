@@ -1,5 +1,17 @@
 [
   {
+    "version": "0.3.1",
+    "date": "2026-11-08",
+    "seguranca": false,
+    "todos": [
+      "Instalador: se faltar o WebView2 da Microsoft, ele oferece instalar, em vez de mostrar um erro em inglês"
+    ],
+    "pro": [
+      "Dois computadores: quando o outro passa a vez, este espera a versão dele chegar pela pasta antes de seguir",
+      "Backup na nuvem e Dois computadores seguem o tema claro ou escuro"
+    ]
+  },
+  {
     "version": "0.3.0",
     "date": "2026-11-08",
     "seguranca": false,

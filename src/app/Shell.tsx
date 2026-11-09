@@ -10,7 +10,7 @@ import { Logo, useTheme } from './theme'
 import { capture, comboOf, useBindings, type ActionId } from './shortcuts'
 import { version as APP_VERSION } from '../../package.json'
 import { Welcome, type WelcomeChoice } from './Welcome'
-import { UpdateBanner } from '../components/Updates'
+import { UpdateBanner, markInstalledSeen } from '../components/Updates'
 import { useReminders } from './reminders'
 import { TimerMini } from '../components/TimerMini'
 import { TIMER_FOCUS, stopTimer, useRunning } from '../data/hours'
@@ -476,7 +476,7 @@ export function Shell() {
   if (ready && !welcomeDone && (fresh || (!settings['vault.path'] && !settings['onboarding.skipped']))) {
     const choose = (c: WelcomeChoice) => {
       setWelcomeDone(true)
-      if (fresh) void call('app_welcome_done').catch(() => {})
+      if (fresh) { void call('app_welcome_done').catch(() => {}); markInstalledSeen() }
       if (c === 'skip') void setSetting('onboarding.skipped', true)
       else if (c !== 'keep') navigate(`/cerebro?modo=${c === 'create' ? 'criar' : 'conectar'}`)
     }
@@ -577,7 +577,7 @@ function SyncLine({ collapsed }: { collapsed: boolean }) {
   if (!st?.enabled) return null
   const turn = st.devices.find((d) => d.hasTurn)
   const n = st.conflicts.length
-  const text = n ? `Os dois mexeram · ${n} para ver` : st.lastError ? 'Dois computadores com erro' : st.behind ? 'Versão nova do outro na pasta' : `Em dia · ${turn ? `${turn.isMe ? 'este' : turn.name} com a vez` : 'ninguém com a vez'}`
+  const text = n ? `Os dois mexeram · ${n} para ver` : st.lastError ? 'Dois computadores com erro' : st.arriving ? `Chegando a versão de ${st.arriving}` : st.behind ? 'Versão nova do outro na pasta' : `Em dia · ${turn ? `${turn.isMe ? 'este' : turn.name} com a vez` : 'ninguém com a vez'}`
   const warn = n > 0 || st.behind
   return (
     <NavLink to="/configuracoes" title={st.lastError || text} className={`flex items-center gap-2 text-[12.5px] hover:text-fg ${st.lastError ? 'text-[#B3261E] dark:text-[#FF8A80]' : warn ? 'text-[#7A5A00] dark:text-[#F2C14E]' : 'text-faint'} ${collapsed ? 'justify-center' : 'px-2.5'}`}>

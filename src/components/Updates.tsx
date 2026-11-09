@@ -129,6 +129,9 @@ const SEEN = 'tesseract.novidades.vista'
 // Configurações pode reabrir o cartão ("Ver o que mudou nesta versão")
 const SHOW = 'tesseract:novidades'
 export const showWhatsNew = () => window.dispatchEvent(new Event(SHOW))
+/** Instalação nova (o instalador acabou de rodar): a versão atual já conta como vista, sem "Atualizado para". */
+let installedNow = false
+export const markInstalledSeen = () => { installedNow = true; if (!inBrowser) void getVersion().then(writeSeen).catch(() => {}) }
 const readSeen = () => { try { return localStorage.getItem(SEEN) } catch { return null } }
 const writeSeen = (v: string) => { try { localStorage.setItem(SEEN, v) } catch { /* sem armazenamento */ } }
 
@@ -141,6 +144,7 @@ function WhatsNew({ testMode }: { testMode: boolean }) {
     if (!ready || inBrowser || testMode) return
     void getVersion().then((v) => {
       setCurrent(v)
+      if (installedNow) { writeSeen(v); return }
       let seen = readSeen()
       if (!seen) {
         // primeira vez com este recurso: quem já usava o app vê o que veio nesta versão; instalação nova, não

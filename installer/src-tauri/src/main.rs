@@ -11,6 +11,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod ai;
+mod webview2;
 
 use serde::Serialize;
 use std::fs;
@@ -431,6 +432,10 @@ fn arg_value(args: &[String], name: &str) -> Option<String> {
 }
 
 fn main() {
+  // sem o WebView2 nenhuma janela abre: confere antes e, se faltar, oferece instalar
+  if !webview2::ensure() {
+    return;
+  }
   let args: Vec<String> = std::env::args().collect();
   let mut uninstall = None;
   let mut self_temp = None;

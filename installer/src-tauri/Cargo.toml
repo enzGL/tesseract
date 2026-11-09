@@ -1,6 +1,6 @@
 [package]
 name = "tesseract-setup"
-version = "0.3.0"
+version = "0.3.1"
 description = "Instalador do Tesseract"
 authors = ["Lanzi Labs"]
 license = "PolyForm-Noncommercial-1.0.0"
@@ -27,7 +27,7 @@ mslnk = "0.1"
 dirs = "6"
 # etapa "IA no seu computador": baixa o Ollama e puxa os modelos pela API local
 ureq = { version = "2.12", features = ["json"] }
-windows-sys = { version = "0.59", features = ["Win32_System_SystemInformation"] }
+windows-sys = { version = "0.59", features = ["Win32_System_SystemInformation", "Win32_UI_WindowsAndMessaging"] }
 
 [profile.release]
 opt-level = "s"
