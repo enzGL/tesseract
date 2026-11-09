@@ -64,12 +64,13 @@ function Preview({ seg }: { seg: Segment }) {
 
 export function SegmentPicker({ onKeep }: { onKeep: () => void }) {
   const { settings } = useStore()
-  const [sel, setSel] = useState<SegmentId>('sites')
+  const prev = (() => { try { return localStorage.getItem(PREV_SEGMENT) } catch { return null } })()
+  // vindo de "Trocar de modelo", começa no modelo atual
+  const [sel, setSel] = useState<SegmentId>(() => SEGMENTS.find((s) => s.id === prev)?.id ?? 'sites')
   const [board, setBoard] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const seg = SEGMENTS.find((s) => s.id === sel)!
-  const prev = (() => { try { return localStorage.getItem(PREV_SEGMENT) } catch { return null } })()
   const customized = !!settings['ui.menu'] || !!settings['ui.home']
 
   const keep = () => {

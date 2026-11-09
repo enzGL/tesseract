@@ -73,10 +73,11 @@ Quem não se encaixa em nenhum modelo escolhe "Montar do zero" (todos os módulo
 |---|---|---|---|
 | 1 | Na Boas-vindas, clicar em "Conectar uma pasta que já existe". | A tela "O que você faz?". | "Já usa Obsidian ou outra pasta de notas? Conecte." |
 | 2 | Escolher "Freelancer" e clicar em "Montar meu Tesseract" (a escolha do modelo está no Ep. 2). | A tela "Conectar as notas que você já tem". | "Escolha o que você faz e siga para as notas." |
-| 3 | Clicar em "Escolher", apontar a pasta e clicar em "Verificar". | A confirmação de que a pasta existe. | "O Tesseract só lê a pasta. Não muda nada nela." |
-| 4 | Clicar em "Usar esta pasta". | A tela Conhecimento com "Conectado" e a busca. | "Conectado." |
-| 5 | Clicar em "Atualizar índice" e digitar uma palavra no campo "Buscar nas suas notas" (no exemplo, `logo`). | As notas que têm a palavra. | "A busca por texto já funciona, mesmo sem internet." |
-| 6 | Clicar numa nota da lista. | A nota aberta ao lado da lista. | "Clique numa nota para ler ali mesmo." |
+| 3 | Clicar em "Escolher", apontar a pasta e clicar em "Verificar". | Quantas notas a pasta tem e "veio do Obsidian". | "Os arquivos ficam onde estão. Nada é copiado." |
+| 4 | Clicar em "Usar esta pasta". | O Conhecimento em três painéis: pastas, a nota aberta e as ligações. | "Pronto: suas pastas, a nota e as ligações na mesma tela." |
+| 5 | Digitar uma palavra no campo "Buscar nas notas" (no exemplo, `logo`). | As notas que têm a palavra. | "A busca já funciona, mesmo sem internet." |
+| 6 | Clicar numa nota da lista. | A nota aberta no meio e as vizinhas à direita. | "Clique numa nota para ler e editar ali mesmo." |
+| 7 | Apagar a busca e clicar na aba "Grafo". | Todas as notas ligadas num grafo. | "E o grafo mostra como tudo se liga." |
 
 Mostrar também, em 5 segundos, a terceira opção da Boas-vindas: "Começar sem notas por enquanto". Ela também passa por "O que você faz?" e depois abre o Início. Legenda: "Pode começar sem notas e criar depois."
 
@@ -176,9 +177,9 @@ Mostrar também, em 5 segundos, a terceira opção da Boas-vindas: "Começar sem
 |---|---|---|---|
 | 1 | Abrir o Início e mostrar o aviso "Montado para freelancer". | Os botões "Ajustar menu" e "Trocar de modelo" no aviso; abaixo, os widgets do modelo. | "O Início já vem montado para o que você faz." |
 | 2 | Clicar em "Editar painel". | O título "Editando o Início", a grade pontilhada e a lista de widgets ao lado. | "Tudo aqui se arrasta e muda de tamanho." |
-| 3 | Arrastar "Horas da semana" pelo título até o topo. Puxar o canto de "Receita do mês" para aumentar. | Os outros cartões abrem espaço sozinhos. | "Arraste pelo título. Puxe o canto para crescer." |
+| 3 | Arrastar "Agenda de hoje" pelo título até o canto de cima, à esquerda. Puxar o canto de "Receita do mês" para alargar. | Os outros cartões abrem espaço sozinhos. | "Arraste pelo título. Puxe o canto para crescer." |
 | 4 | Em "Buscar widget", digitar `lança` e clicar em "Adicionar" em "Lançamentos recentes". | O widget novo na grade. | "Só aparecem os widgets dos módulos que estão no seu menu." |
-| 5 | Em "Painéis salvos", clicar em "Novo painel" e chamar de `Fim do mês`. | O painel novo, com o nome no campo. | "Um Início para cada momento. O app abre no último que você usou." |
+| 5 | Em "Painéis salvos", clicar em "Novo painel" e chamar de `Fim do mês`. O painel nasce vazio: adicionar "Receita do mês" e "Contas a pagar". | O painel novo, com o nome no campo e os dois widgets. | "Um Início para cada momento. O app abre no último que você usou." |
 | 6 | Clicar em "Salvar disposição". | O Início com o painel novo e o seletor "Painel" no topo. | "Salvo." |
 | 7 | No menu lateral, abrir "Mais módulos". Clicar com o botão direito em "CRM e Funil" e em "Mostrar no menu". | O CRM volta para o menu. | "O que você não usa fica guardado em Mais módulos. Nada é apagado." |
 | 8 | Clicar com o botão direito em "Projetos", depois em "Renomear". Digitar `Trabalhos` e clicar em "Salvar". | O menu mostra "Trabalhos". No menu do clique direito aparece "Voltar ao nome Projetos". | "Dê aos módulos o nome que você usa." |

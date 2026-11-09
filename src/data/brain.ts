@@ -114,6 +114,7 @@ export function plan(p: Profile): BrainPlan {
 
 ## Quem sou eu
 **${name}**${p.role.trim() ? `. ${p.role.trim()}` : ''}
+
 Ficha: [[pessoas/${me}]]
 ${orgs.length ? `\n**Onde atuo:** ${orgs.map((o) => `[[projetos/${slug(o)}/overview|${o}]]`).join(', ')}\n` : ''}
 ## Estrutura

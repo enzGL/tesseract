@@ -10,7 +10,10 @@ import { workspace } from '../data/workspace'
 import garden from '../assets/garden.png'
 import gardenDark from '../assets/art-dark/hero.png'
 import { useTheme } from '../app/theme'
-import { call, useScopes, useStore, type Task } from '../data/api'
+import { call, useScopes, useStore, type Task, type Tx } from '../data/api'
+import { brl } from '../data/statement'
+import { monthFrom, monthTo } from '../components/widget-kit'
+import type { Opportunity } from '../data/crm'
 import { loadCtx, understand, type Action, type Ctx } from '../data/commands'
 import { ActionPlan, DoneList } from '../components/ActionCard'
 
@@ -31,7 +34,10 @@ function greeting() {
 
 // Hero do Início: jardim em dither ao fundo, névoa creme à esquerda para o texto ler bem
 // e um cartão "Hoje" à direita com o estado real (vazio enquanto não há dados).
-function Hero({ demo, data }: { demo: boolean; data: ReturnType<typeof loadDashboard> }) {
+// valores reais do cartão Hoje, em centavos (null = ainda carregando ou sem como saber: o build aberto não tem CRM)
+type Sums = { receivable: number | null; pipeline: number | null }
+
+function Hero({ demo, data, sums }: { demo: boolean; data: ReturnType<typeof loadDashboard>; sums: Sums }) {
   const { theme } = useTheme()
   const { settings } = useStore()
   const owner = settings['profile.name'] || workspace.owner
@@ -43,8 +49,8 @@ function Hero({ demo, data }: { demo: boolean; data: ReturnType<typeof loadDashb
     : aiMode !== 'local' && settings['ai.externalModel'] ? `Externo · ${settings['ai.provider'] ?? ''}` : null
   const rows: { label: string; value: string; muted?: boolean; to?: string }[] = [
     { label: 'Tarefas abertas', value: String(data.openTasks.length), to: '/projetos' },
-    { label: 'A receber no mês', value: money(data.revenue.expected ?? 0), to: '/financas' },
-    { label: 'Pipeline aberto', value: money(pipeline), to: '/crm' },
+    { label: 'A receber no mês', value: demo ? money(data.revenue.expected ?? 0) : sums.receivable === null ? '…' : brl(sums.receivable), muted: !demo && sums.receivable === null, to: '/financas' },
+    { label: 'Pipeline aberto', value: demo ? money(pipeline) : sums.pipeline === null ? '—' : brl(sums.pipeline), muted: !demo && sums.pipeline === null, to: '/crm' },
     { label: 'Conhecimento', value: data.notesIndexed === null ? 'Não conectado' : `${data.notesIndexed} notas`, muted: data.notesIndexed === null, to: '/cerebro' },
     { label: 'Assistente de IA', value: aiLabel ?? 'Não configurado', muted: !aiLabel, to: '/configuracoes' },
   ]
@@ -165,12 +171,27 @@ export function Overview() {
         due: r.task.due ? new Date(`${r.task.due}T12:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : '·' }))))
       .catch(() => setOpen([]))
   }, [demo])
+  // cartão Hoje: a receber neste mês (receitas ainda não recebidas) e pipeline aberto, somando todos os escopos
+  const scopes = useScopes()
+  const scopeKey = scopes.map((s) => s.id).join(',')
+  const [sums, setSums] = useState<Sums>({ receivable: null, pipeline: null })
+  useEffect(() => {
+    if (demo) return
+    const ids = scopes.map((s) => s.id)
+    const from = monthFrom(), to = monthTo()
+    void Promise.all(ids.map((scope) => call<Tx[]>('finance_list', { scope, from, to }).catch(() => [] as Tx[])))
+      .then((all) => all.flat().filter((t) => t.kind === 'in' && !t.paidAt).reduce((a, t) => a + t.amount, 0))
+      .then((receivable) => setSums((p) => ({ ...p, receivable })))
+    void Promise.all(ids.map((scope) => call<Opportunity[]>('crm_opportunities', { scope })))
+      .then((all) => all.flat().filter((o) => o.stage !== 'ganho' && o.stage !== 'perdido').reduce((a, o) => a + o.value, 0))
+      .then((pipeline) => setSums((p) => ({ ...p, pipeline })), () => setSums((p) => ({ ...p, pipeline: null })))
+  }, [demo, scopeKey]) // eslint-disable-line react-hooks/exhaustive-deps
   const data = { ...loadDashboard(demo), ...(demo ? {} : { notesIndexed: index.last?.notes ?? null, openTasks: open }) }
   const { visible } = useMenu() // atalhos só dos módulos que estão no menu
 
   return (
     <div className="min-h-full">
-      <Hero demo={demo} data={data} />
+      <Hero demo={demo} data={data} sums={sums} />
       <div className="flex flex-col items-center px-8 pb-12">
         <div className="-mt-10 flex w-full justify-center"><PromptBox /></div>
         <div className="mt-4 flex w-full max-w-[640px] flex-col"><DoneList /></div>

@@ -151,8 +151,10 @@ pub fn parse(rel: &str, raw: &str) -> Parsed {
     chunks.push((None, String::new())); // nota vazia ainda acha pelo título
   }
 
+  // [[ dentro de código (bloco ou `crase`) é exemplo, não ligação, como no Obsidian
   let mut links = Vec::new();
-  let mut rest = body;
+  let clean = without_code(body);
+  let mut rest = clean.as_str();
   while let Some(i) = rest.find("[[") {
     rest = &rest[i + 2..];
     let Some(j) = rest.find("]]") else { break };
@@ -165,6 +167,32 @@ pub fn parse(rel: &str, raw: &str) -> Parsed {
   }
 
   Parsed { title: title.unwrap_or(fallback), chunks, links }
+}
+
+/// O texto sem blocos de código (``` ou ~~~) e sem trechos entre crases.
+fn without_code(body: &str) -> String {
+  let mut out = String::with_capacity(body.len());
+  let mut fenced = false;
+  for line in body.lines() {
+    let t = line.trim_start();
+    if t.starts_with("```") || t.starts_with("~~~") {
+      fenced = !fenced;
+      continue;
+    }
+    if fenced {
+      continue;
+    }
+    let mut tick = false;
+    for ch in line.chars() {
+      if ch == '`' {
+        tick = !tick;
+      } else if !tick {
+        out.push(ch);
+      }
+    }
+    out.push('\n');
+  }
+  out
 }
 
 fn delete_note(tx: &Connection, id: i64) -> Res<()> {
@@ -357,6 +385,12 @@ mod tests {
     assert_eq!(p.title, "Projeto X");
     assert_eq!(p.links, vec!["pessoas/ana", "LEIA-ME"]);
     assert!(p.chunks.iter().any(|(h, t)| h.as_deref() == Some("Decisões") && t.contains("# não é título")));
+  }
+
+  #[test]
+  fn link_em_codigo_nao_conta() {
+    let p = parse("LEIA-ME.md", "# Base\nUse links (`[[nome da nota]]`) e veja [[pessoas/ana]].\n```\n[[exemplo]]\n```\n~~~\n[[outro]]\n~~~\nFim [[x]].\n");
+    assert_eq!(p.links, vec!["pessoas/ana", "x"]);
   }
 
   #[test]
