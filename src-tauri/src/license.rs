@@ -23,10 +23,35 @@ pub const PREFIX: &str = "TESS1.";
 /// compilar. Sem ela, nenhuma licença confere: o app fica no Grátis, nunca o contrário.
 /// Na versão de desenvolvimento, a variável também vale na hora de rodar (para testar com a chave
 /// de teste do scripts/license-dev-server.mjs).
-pub fn public_key() -> Res<[u8; 32]> {
+///
+/// Pode trazer duas chaves, separadas por vírgula ("atual,próxima"): a licença vale se conferir com
+/// qualquer uma. É o que deixa trocar a chave da licença sem derrubar o Pro de quem ainda não
+/// atualizou (docs/security/RUNBOOKS.md, runbook 2).
+pub fn public_keys() -> Res<Vec<[u8; 32]>> {
   let runtime = if cfg!(debug_assertions) { std::env::var("TESSERACT_LICENSE_PUBKEY").ok() } else { None };
   let hex = runtime.or_else(|| option_env!("TESSERACT_LICENSE_PUBKEY").map(String::from)).ok_or("este build não tem a chave pública da licença")?;
-  unhex32(&hex).ok_or_else(|| "chave pública da licença inválida neste build".into())
+  keys_of(&hex)
+}
+
+fn keys_of(list: &str) -> Res<Vec<[u8; 32]>> {
+  let keys: Option<Vec<[u8; 32]>> = list.split(',').map(str::trim).filter(|k| !k.is_empty()).map(unhex32).collect();
+  match keys {
+    Some(k) if !k.is_empty() && k.len() <= 2 => Ok(k),
+    _ => Err("chave pública da licença inválida neste build".into()),
+  }
+}
+
+/// Confere o token com as chaves deste build (a atual e, se houver, a próxima).
+pub fn parse_any(token: &str) -> Res<License> {
+  let keys = public_keys()?;
+  let mut last = Err("a chave não confere (assinatura inválida)".to_string());
+  for k in &keys {
+    last = parse(token, k);
+    if last.is_ok() {
+      break;
+    }
+  }
+  last
 }
 
 fn unhex32(s: &str) -> Option<[u8; 32]> {
@@ -50,7 +75,15 @@ pub struct License {
   pub ciclo: String,
   pub emitida: u64,
   pub ate: u64,
+  /// Até quando a assinatura está paga (a tela mostra esta data). `ate` é até quando ESTA licença
+  /// vale sem renovar: no máximo 35 dias depois de emitida. 0 = licença antiga, sem o campo.
+  #[serde(default, skip_serializing_if = "is_zero")]
+  pub pago: u64,
   pub pc: String,
+}
+
+fn is_zero(n: &u64) -> bool {
+  *n == 0
 }
 
 /// Lê e confere o token com a chave pública dada. Não olha a data: isso é `status`.
@@ -81,8 +114,9 @@ pub fn parse(token: &str, key: &[u8; 32]) -> Res<License> {
 pub enum Status {
   /// Sem licença (ou com uma que não é deste computador).
   Gratis,
-  /// Pro em dia. `dias` = quantos faltam até `ate`.
-  Pro { email: String, ciclo: String, ate: u64, dias: u64 },
+  /// Pro em dia. `dias` = quantos faltam até `ate` (o fim desta licença, que renova sozinha);
+  /// `pago` = até quando a assinatura está paga (0 = a licença não diz).
+  Pro { email: String, ciclo: String, ate: u64, dias: u64, pago: u64 },
   /// Venceu: os recursos Pro ficam só para leitura até renovar. Nada é apagado.
   Leitura { email: String, ate: u64 },
 }
@@ -101,7 +135,7 @@ pub fn status(lic: Option<&License>, device: &str, now: u64) -> Status {
     return Status::Gratis;
   }
   if now <= l.ate {
-    Status::Pro { email: l.email.clone(), ciclo: l.ciclo.clone(), ate: l.ate, dias: (l.ate - now) / 86_400 }
+    Status::Pro { email: l.email.clone(), ciclo: l.ciclo.clone(), ate: l.ate, dias: (l.ate - now) / 86_400, pago: l.pago }
   } else {
     Status::Leitura { email: l.email.clone(), ate: l.ate }
   }
@@ -342,13 +376,13 @@ pub fn current(s: &Saved) -> Option<License> {
   if s.token.is_empty() {
     return None;
   }
-  parse(&s.token, &public_key().ok()?).ok()
+  parse_any(&s.token).ok()
 }
 
 pub fn view_of(s: &Saved, now: u64) -> View {
   let lic = current(s);
   let status = status(lic.as_ref(), &s.device, effective_now(now, s.last_seen));
-  let ready = public_key().is_ok();
+  let ready = public_keys().is_ok();
   View {
     // no build do código aberto os limites valem mesmo sem a chave (ver plan_without_key)
     limited: (ready || !cfg!(pro)) && !matches!(status, Status::Pro { .. }),
@@ -386,7 +420,7 @@ const fn plan_without_key(pro_build: bool) -> Plan {
 }
 
 pub fn plan_of(s: &Saved, now: u64) -> Plan {
-  if public_key().is_err() {
+  if public_keys().is_err() {
     return plan_without_key(cfg!(pro));
   }
   match view_of(s, now).status {
@@ -462,7 +496,7 @@ fn err_of(v: &Value) -> &str {
 
 /// Lê a licença que o site mandou e só aceita se for deste computador.
 fn accept(s: &Saved, token: &str) -> Res<License> {
-  let lic = parse(token, &public_key()?)?;
+  let lic = parse_any(token)?;
   if !lic.pc.is_empty() && lic.pc != s.device {
     return Err("a licença veio para outro computador".into());
   }
@@ -746,7 +780,34 @@ mod tests {
     format!("{msg}.{}", URL_SAFE_NO_PAD.encode(sig.to_bytes()))
   }
   fn lic() -> License {
-    License { v: 1, id: "sub_1".into(), email: "ana@exemplo.com".into(), plano: "pro".into(), ciclo: "mensal".into(), emitida: 1_000, ate: 1_000 + 40 * 86_400, pc: "pc-a".into() }
+    License { v: 1, id: "sub_1".into(), email: "ana@exemplo.com".into(), plano: "pro".into(), ciclo: "mensal".into(), emitida: 1_000, ate: 1_000 + 40 * 86_400, pago: 0, pc: "pc-a".into() }
+  }
+
+  // Segurança: a licença nova é curta e diz até quando está pago.
+  #[test]
+  fn licenca_curta_traz_ate_quando_esta_pago() {
+    let sk = key();
+    let pk = sk.verifying_key().to_bytes();
+    let curta = License { ate: 1_000 + 35 * 86_400, pago: 1_000 + 365 * 86_400, ..lic() };
+    let lida = parse(&make(&sk, &curta), &pk).unwrap();
+    assert_eq!(lida.pago, 1_000 + 365 * 86_400);
+    assert_eq!(status(Some(&lida), "pc-a", 2_000), Status::Pro { email: lida.email.clone(), ciclo: lida.ciclo.clone(), ate: lida.ate, dias: 34, pago: lida.pago });
+    // pago o ano inteiro não estica: passou do fim DESTA licença sem renovar, é leitura
+    assert!(matches!(status(Some(&lida), "pc-a", lida.ate + 1), Status::Leitura { .. }));
+    // licença antiga, sem o campo: pago = 0 e o texto assinado não muda
+    assert_eq!(parse(&make(&sk, &lic()), &pk).unwrap().pago, 0);
+    assert!(!String::from_utf8(URL_SAFE_NO_PAD.decode(make(&sk, &lic()).split('.').nth(1).unwrap()).unwrap()).unwrap().contains("pago"));
+  }
+
+  // O build pode trazer a chave atual e a próxima.
+  #[test]
+  fn duas_chaves_publicas_no_build() {
+    let (a, b) = (crate::common::hex(&key().verifying_key().to_bytes()), crate::common::hex(&SigningKey::from_bytes(&[9u8; 32]).verifying_key().to_bytes()));
+    assert_eq!(keys_of(&a).unwrap().len(), 1);
+    assert_eq!(keys_of(&format!("{a}, {b}")).unwrap().len(), 2);
+    for bad in ["", ",", "abc", &format!("{a},zz"), &format!("{a},{b},{a}")] {
+      assert!(keys_of(bad).is_err(), "{bad}");
+    }
   }
 
   #[test]

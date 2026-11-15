@@ -27,5 +27,11 @@ fn main() {
   let conf: serde_json::Value = serde_json::from_str(&fs::read_to_string(conf_path).unwrap()).unwrap();
   println!("cargo:rustc-env=TESSERACT_VERSION={}", conf["version"].as_str().unwrap());
 
+  // As DLLs que o .exe pede ao abrir são procuradas só na pasta do sistema, não na pasta onde o
+  // instalador está (Downloads): uma DLL falsa deixada ao lado dele não é carregada (segurança).
+  if env::var("CARGO_CFG_TARGET_ENV").as_deref() == Ok("msvc") {
+    println!("cargo:rustc-link-arg-bins=/DEPENDENTLOADFLAG:0x800");
+  }
+
   tauri_build::build()
 }

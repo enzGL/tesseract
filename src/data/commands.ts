@@ -293,16 +293,20 @@ export async function undo(d: Done) {
   for (const u of d.undo) await call(u.cmd, u.args)
 }
 
-// "Feito pelo Chat · hoje": só neste computador, para o Desfazer do dia.
-const LOG = 'tesseract.chat.done'
+// "Feito pelo Chat · hoje": para o Desfazer do dia. Fica só na memória, até fechar o app: os textos
+// trazem nome de cliente e título de lançamento, e o armazenamento do navegador não é cifrado como o
+// banco (segurança). A chave antiga é apagada ao abrir.
+const OLD_LOG = 'tesseract.chat.done'
+try { localStorage.removeItem(OLD_LOG) } catch { /* sem armazenamento */ }
+let done: Done[] = []
 export function doneToday(today: string): Done[] {
-  try { return (JSON.parse(localStorage.getItem(LOG) ?? '[]') as Done[]).filter((d) => d.at.slice(0, 10) === today || new Date(d.at).toLocaleDateString('sv') === today) } catch { return [] }
+  return done.filter((d) => d.at.slice(0, 10) === today || new Date(d.at).toLocaleDateString('sv') === today)
 }
 export function logDone(d: Done, today: string) {
-  try { localStorage.setItem(LOG, JSON.stringify([d, ...doneToday(today)].slice(0, 30))) } catch { /* sem armazenamento */ }
+  done = [d, ...doneToday(today)].slice(0, 30)
   window.dispatchEvent(new Event('tesseract:chat-done'))
 }
 export function markUndone(at: string, today: string) {
-  try { localStorage.setItem(LOG, JSON.stringify(doneToday(today).map((d) => (d.at === at ? { ...d, undone: true } : d)))) } catch { /* sem armazenamento */ }
+  done = doneToday(today).map((d) => (d.at === at ? { ...d, undone: true } : d))
   window.dispatchEvent(new Event('tesseract:chat-done'))
 }

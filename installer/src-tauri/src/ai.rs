@@ -52,7 +52,7 @@ fn ollama_exe() -> Option<PathBuf> {
     return Some(exe);
   }
   // instalado em outro lugar e no PATH
-  let out = Command::new("where").arg("ollama").creation_flags(NO_WINDOW).output().ok()?;
+  let out = Command::new(crate::sys("where.exe")).arg("ollama").creation_flags(NO_WINDOW).output().ok()?;
   String::from_utf8_lossy(&out.stdout).lines().next().map(|l| PathBuf::from(l.trim())).filter(|p| p.exists())
 }
 
@@ -84,8 +84,10 @@ fn gb(b: u64) -> String {
 pub fn install_ollama(progress: &dyn Fn(u32, &str, String)) -> Result<(), String> {
   let resp = agent(60).get(OLLAMA_SETUP).call().map_err(|e| format!("não deu para baixar o Ollama: {e}"))?;
   let total: u64 = resp.header("Content-Length").and_then(|v| v.parse().ok()).unwrap_or(0);
-  let tmp = std::env::temp_dir().join("OllamaSetup-tesseract.exe");
-  let mut file = fs::File::create(&tmp).map_err(|e| e.to_string())?;
+  // nome com o número deste processo e arquivo novo (create_new): ninguém deixa um pronto no caminho
+  let tmp = std::env::temp_dir().join(format!("OllamaSetup-tesseract-{}.exe", std::process::id()));
+  let _ = fs::remove_file(&tmp);
+  let mut file = fs::OpenOptions::new().write(true).create_new(true).open(&tmp).map_err(|e| e.to_string())?;
   let mut reader = resp.into_reader();
   let mut buf = vec![0u8; 256 * 1024];
   let mut done = 0u64;
@@ -108,6 +110,13 @@ pub fn install_ollama(progress: &dyn Fn(u32, &str, String)) -> Result<(), String
     }
   }
   drop(file);
+  // Só roda com a assinatura digital válida da Ollama, como o WebView2 com a da Microsoft
+  // (segurança): se o endereço do download for trocado, o arquivo não é aberto.
+  progress(91, "Conferindo a assinatura do Ollama", String::new());
+  if !crate::signed_by(&tmp, "Ollama Inc.") {
+    let _ = fs::remove_file(&tmp);
+    return Err("o arquivo baixado não tem a assinatura da Ollama, então não foi aberto. Dá para instalar depois por ollama.com".into());
+  }
   progress(92, "Instalando o Ollama", String::new());
   let ok = Command::new(&tmp)
     .args(["/VERYSILENT", "/NORESTART", "/SUPPRESSMSGBOXES", "/SP-"])

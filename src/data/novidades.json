@@ -1,5 +1,23 @@
 [
   {
+    "version": "0.3.2",
+    "date": "2026-11-14",
+    "seguranca": true,
+    "todos": [
+      "Início: o cartão Hoje mostra o que falta receber no mês somando todos os escopos, em vez de R$ 0",
+      "Conhecimento: [[ dentro de um trecho de código não vira mais link",
+      "Trocar de modelo de negócio começa marcado no modelo que você já usa",
+      "Segurança: a atualização automática só aceita um instalador mais novo que a versão instalada, e confere o arquivo de novo antes de abrir",
+      "Segurança: o instalador confere a assinatura do Ollama antes de abrir e só usa programas e bibliotecas da pasta do Windows",
+      "Plano: a licença do Pro passa a se renovar sozinha a cada poucas semanas; a tela continua mostrando até quando está pago",
+      "Chat: a lista \"Feito pelo Chat\" de hoje fica só na memória e some ao fechar o app"
+    ],
+    "pro": [
+      "Início: o Pipeline aberto do cartão Hoje soma as oportunidades em aberto de todos os escopos",
+      "Dois computadores e backup na nuvem: uma versão antiga renomeada na pasta não passa mais por nova"
+    ]
+  },
+  {
     "version": "0.3.1",
     "date": "2026-11-08",
     "seguranca": false,

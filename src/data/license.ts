@@ -5,7 +5,8 @@ import { call, inBrowser, PRO_EVENT } from './api'
 
 export type LicenseStatus =
   | { plano: 'gratis' }
-  | { plano: 'pro'; email: string; ciclo: 'mensal' | 'anual' | string; ate: number; dias: number }
+  // ate/dias: fim DESTA licença (curta, renova sozinha); pago: até quando a assinatura está paga (0 = a licença não diz)
+  | { plano: 'pro'; email: string; ciclo: 'mensal' | 'anual' | string; ate: number; dias: number; pago?: number }
   | { plano: 'leitura'; email: string; ate: number }
 export type Problem = '' | 'rede' | 'assinatura' | 'cancelada' | 'liberada'
 export type LicenseView = {
@@ -63,6 +64,11 @@ export function closeActivation() { activation = null; asubs.forEach((f) => f())
 if (typeof window !== 'undefined') window.addEventListener(PRO_EVENT, (e) => openActivation((e as CustomEvent<string>).detail))
 export const useActivation = () => useSyncExternalStore((f) => { asubs.add(f); return () => asubs.delete(f) }, () => activation)
 
+/** A data que a pessoa quer ver em "Ativo até": o fim do que está pago. A licença em si é curta (no
+ *  máximo 35 dias) e renova sozinha; sem o campo `pago` (licença antiga), vale o fim da licença. */
+export const paidEnd = (s: { ate: number; pago?: number }) => (s.pago && s.pago > s.ate ? s.pago : s.ate)
+export const paidDays = (s: { ate: number; dias: number; pago?: number }, now = Date.now() / 1000) =>
+  (s.pago && s.pago > s.ate ? Math.max(0, Math.floor((s.pago - now) / 86_400)) : s.dias)
 export const day = (secs: number) => new Date(secs * 1000).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 export function seenAgo(secs: number): string {
   if (!secs) return 'nunca'

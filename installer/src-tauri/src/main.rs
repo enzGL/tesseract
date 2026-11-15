@@ -4,8 +4,9 @@
 // Com --uninstall, o mesmo .exe vira o desinstalador: ele se copia para a pasta temporária e roda
 // de lá, para conseguir apagar a pasta do app.
 //
-// TESSERACT_SETUP_SANDBOX=<pasta> (teste): tudo vai para dentro dessa pasta (programa, atalhos,
-// dados) e o registro usa uma chave própria fora de "Aplicativos instalados".
+// TESSERACT_SETUP_SANDBOX=<pasta> (teste, só na versão de desenvolvimento do instalador): tudo vai
+// para dentro dessa pasta (programa, atalhos, dados) e o registro usa uma chave própria fora de
+// "Aplicativos instalados". No instalador de lançamento a variável não vale (segurança).
 // Com --update (atualização automática, chamado pelo app): instala direto na pasta registrada,
 // mantém os atalhos que existem, não mostra a boas-vindas de novo e abre o app no fim.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
@@ -36,6 +37,58 @@ const NO_WINDOW: u32 = 0x0800_0000;
 
 type Res<T> = Result<T, String>;
 
+/// Caminho completo de um programa do Windows (`sys("cmd.exe")`, `sys(POWERSHELL)`). Chamado só pelo
+/// nome, o Windows procura primeiro na pasta do próprio instalador (Downloads): um `powershell.exe`
+/// falso deixado lá abriria no lugar do verdadeiro (segurança). A pasta vem do próprio
+/// Windows, não de variável de ambiente.
+pub(crate) fn sys(rel: &str) -> PathBuf {
+  let mut buf = [0u16; 260];
+  let n = unsafe { windows_sys::Win32::System::SystemInformation::GetSystemDirectoryW(buf.as_mut_ptr(), buf.len() as u32) } as usize;
+  let dir = if n > 0 && n < buf.len() { PathBuf::from(String::from_utf16_lossy(&buf[..n])) } else { PathBuf::from(r"C:\Windows\System32") };
+  dir.join(rel)
+}
+pub(crate) const POWERSHELL: &str = r"WindowsPowerShell\v1.0\powershell.exe";
+
+/// Assinatura digital válida (conferida pelo próprio Windows) e emitida para `org`
+/// ("Microsoft Corporation", "Ollama Inc."). Arquivo baixado só roda depois disto.
+pub(crate) fn signed_by(file: &Path, org: &str) -> bool {
+  let script = "$s = Get-AuthenticodeSignature -LiteralPath $env:TESS_FILE; \
+                if ($s.Status -eq 'Valid' -and $s.SignerCertificate.Subject -match ('(^|, )O=' + [regex]::Escape($env:TESS_ORG) + '(,|$)')) { 'ok' }";
+  Command::new(sys(POWERSHELL))
+    .args(["-NoProfile", "-NonInteractive", "-Command", script])
+    .env("TESS_FILE", file)
+    .env("TESS_ORG", org)
+    .creation_flags(NO_WINDOW)
+    .output()
+    .map(|o| String::from_utf8_lossy(&o.stdout).trim() == "ok")
+    .unwrap_or(false)
+}
+
+/// "0.3.2" -> [0, 3, 2]. Trecho que não é número conta como 0.
+fn version_parts(v: &str) -> Vec<u64> {
+  v.trim().trim_start_matches('v').split(['.', '-', '+']).take(3).map(|p| p.parse().unwrap_or(0)).collect()
+}
+
+/// A atualização automática só anda para a frente: a assinatura garante QUEM fez o instalador, não
+/// QUAL versão ele é. Sem isto, quem trocasse o latest.json do site por um instalador oficial antigo
+/// faria o app voltar para uma versão com falhas já corrigidas (segurança). Instalar uma versão
+/// antiga à mão, pelo instalador normal, continua sendo escolha da pessoa.
+fn update_goes_back(installed: &str, this: &str) -> bool {
+  !installed.trim().is_empty() && version_parts(this) < version_parts(installed)
+}
+
+#[link(name = "kernel32")]
+unsafe extern "system" {
+  fn SetDefaultDllDirectories(flags: u32) -> i32;
+}
+/// DLL carregada depois de o programa abrir (pelo nome, por alguma biblioteca do Windows) também só
+/// vem da pasta do sistema, nunca da pasta do instalador nem da pasta atual (segurança).
+/// As que o .exe pede ao abrir ficam por conta do /DEPENDENTLOADFLAG do build.rs.
+fn only_system_dlls() {
+  const LOAD_LIBRARY_SEARCH_SYSTEM32: u32 = 0x0800;
+  unsafe { SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32) };
+}
+
 #[derive(Clone)]
 struct Places {
   sandbox: bool,
@@ -48,7 +101,7 @@ struct Places {
 
 impl Places {
   fn new() -> Places {
-    if let Some(sb) = std::env::var_os("TESSERACT_SETUP_SANDBOX").map(PathBuf::from) {
+    if let Some(sb) = std::env::var_os("TESSERACT_SETUP_SANDBOX").filter(|_| cfg!(debug_assertions)).map(PathBuf::from) {
       return Places {
         sandbox: true,
         reg_key: r"Software\Lanzi Labs\TesseractSetupSandbox".into(),
@@ -152,7 +205,7 @@ fn close_running(dir: &Path) {
     "Get-Process | Where-Object {{ $_.Path -and $_.Path.StartsWith('{d}\\', 'OrdinalIgnoreCase') -and $_.Id -ne {pid} }} | Stop-Process -Force",
     pid = std::process::id()
   );
-  let _ = Command::new("powershell").args(["-NoProfile", "-NonInteractive", "-Command", &script]).creation_flags(NO_WINDOW).status();
+  let _ = Command::new(sys(POWERSHELL)).args(["-NoProfile", "-NonInteractive", "-Command", &script]).creation_flags(NO_WINDOW).status();
   std::thread::sleep(std::time::Duration::from_millis(400));
 }
 
@@ -328,6 +381,13 @@ fn do_ai(app: &AppHandle, p: &Places, items: &[String], chat_model: Option<&str>
 async fn setup_install(app: AppHandle, ctx: State<'_, Ctx>, dir: String, desktop: bool, start_menu: bool, ai: Vec<String>, chat_model: Option<String>) -> Res<Vec<String>> {
   let p = ctx.places.clone();
   let welcome = !ctx.update;
+  if ctx.update {
+    if let Some((old, _, _)) = installed(&p) {
+      if update_goes_back(&old, VERSION) {
+        return Err(format!("esta atualização é da versão {VERSION}, mais antiga que a {old} que está instalada. Nada foi trocado."));
+      }
+    }
+  }
   let dir = PathBuf::from(dir.trim());
   if !dir.is_absolute() {
     return Err("escolha uma pasta completa, como C:\\Users\\voce\\AppData\\Local\\Tesseract".into());
@@ -432,6 +492,7 @@ fn arg_value(args: &[String], name: &str) -> Option<String> {
 }
 
 fn main() {
+  only_system_dlls();
   // sem o WebView2 nenhuma janela abre: confere antes e, se faltar, oferece instalar
   if !webview2::ensure() {
     return;
@@ -489,7 +550,7 @@ fn main() {
       if let tauri::RunEvent::Exit = ev {
         // apaga a cópia temporária do desinstalador depois que ele fechar
         if let Some(t) = &cleanup {
-          let _ = Command::new("cmd")
+          let _ = Command::new(sys("cmd.exe"))
             .raw_arg(format!("/C ping 127.0.0.1 -n 3 > nul & del /f /q \"{}\"", t.display()))
             .creation_flags(NO_WINDOW)
             .spawn();
@@ -501,6 +562,35 @@ fn main() {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  // Segurança: a atualização automática não volta de versão.
+  #[test]
+  fn atualizacao_nao_volta_de_versao() {
+    assert!(update_goes_back("0.3.2", "0.2.0"));
+    assert!(update_goes_back("0.10.0", "0.9.9"), "compara número, não texto");
+    assert!(update_goes_back("1.0.0", "0.9.9"));
+    assert!(!update_goes_back("0.3.1", "0.3.2"));
+    assert!(!update_goes_back("0.3.2", "0.3.2"), "a mesma versão reinstala");
+    assert!(!update_goes_back("", "0.3.2"), "instalação antiga sem versão registrada");
+  }
+
+  // Segurança: programas do Windows pelo caminho completo, na pasta do sistema.
+  #[test]
+  fn programas_do_windows_pelo_caminho_completo() {
+    for p in [sys("cmd.exe"), sys("where.exe"), sys(POWERSHELL)] {
+      assert!(p.is_absolute() && p.exists(), "{}", p.display());
+      assert!(p.to_string_lossy().to_lowercase().contains(r"\system32\"), "{}", p.display());
+    }
+  }
+
+  // Segurança: arquivo baixado só roda com a assinatura de quem deveria ter feito.
+  #[test]
+  fn arquivo_sem_assinatura_nao_passa() {
+    let me = std::env::current_exe().unwrap();
+    assert!(!signed_by(&me, "Ollama Inc."), "o binário de teste não tem assinatura");
+    assert!(!signed_by(&me, "Microsoft Corporation"));
+    assert!(!signed_by(Path::new(r"C:\nao-existe.exe"), "Ollama Inc."));
+  }
 
   #[test]
   fn etapa_da_ia_so_com_licenca_na_pasta() {

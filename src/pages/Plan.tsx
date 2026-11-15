@@ -3,7 +3,7 @@ import { AlertTriangle, Check, CreditCard, Laptop, LogOut, Monitor, RefreshCw, S
 import { Badge, Button, PageHeader } from '../components/ui'
 import { inBrowser } from '../data/api'
 import {
-  day, licenseDevices, logoutLicense, openActivation, openCheckout, releaseDevice, renewLicense, seenAgo, useLicense,
+  day, licenseDevices, paidDays, paidEnd, logoutLicense, openActivation, openCheckout, releaseDevice, renewLicense, seenAgo, useLicense,
   type LicenseDevice, type LicenseView,
 } from '../data/license'
 
@@ -52,8 +52,8 @@ export function Plan() {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex flex-col gap-1">
               <span className={label}>Pro {s.ciclo === 'anual' ? 'anual' : 'mensal'}</span>
-              <h2 className="font-serif text-[26px] leading-tight">Ativo até {day(s.ate)}</h2>
-              <p className="text-[14px] text-muted">{s.email} · {s.dias === 0 ? 'vence hoje' : `faltam ${s.dias} dia${s.dias === 1 ? '' : 's'}`}</p>
+              <h2 className="font-serif text-[26px] leading-tight">Ativo até {day(paidEnd(s))}</h2>
+              <p className="text-[14px] text-muted">{s.email} · {paidDays(s) === 0 ? 'vence hoje' : `faltam ${paidDays(s)} dia${paidDays(s) === 1 ? '' : 's'}`}</p>
             </div>
             {v.online && <Button icon={RefreshCw} disabled={!!busy} onClick={() => void act('renew', renewLicense)}>{busy === 'renew' ? 'Conferindo...' : 'Conferir agora'}</Button>}
           </div>

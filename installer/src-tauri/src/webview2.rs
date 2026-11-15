@@ -4,7 +4,6 @@
 // pelo instalador oficial da Microsoft (o "bootstrapper", que baixa a versão certa para o computador).
 // O arquivo baixado só roda com assinatura digital válida da Microsoft.
 use std::io::Read;
-use std::os::windows::process::CommandExt;
 use std::path::Path;
 use std::process::Command;
 use std::time::Duration;
@@ -13,7 +12,6 @@ use windows_sys::Win32::UI::WindowsAndMessaging::{IDYES, MB_ICONERROR, MB_ICONIN
 const BOOTSTRAPPER: &str = "https://go.microsoft.com/fwlink/p/?LinkId=2124703";
 const PAGINA: &str = "https://developer.microsoft.com/microsoft-edge/webview2/";
 const TITULO: &str = "Instalar o Tesseract";
-const NO_WINDOW: u32 = 0x0800_0000;
 
 fn has() -> bool {
   tauri::webview_version().map(|v| !v.trim().is_empty()).unwrap_or(false)
@@ -41,15 +39,7 @@ fn download(to: &Path) -> Result<(), String> {
 
 /// Assinatura Authenticode válida e emitida para a Microsoft (conferida pelo próprio Windows).
 fn signed_by_microsoft(file: &Path) -> bool {
-  let script = "$s = Get-AuthenticodeSignature -LiteralPath $env:TESS_WV2; \
-                if ($s.Status -eq 'Valid' -and $s.SignerCertificate.Subject -match 'O=Microsoft Corporation') { 'ok' }";
-  Command::new("powershell.exe")
-    .args(["-NoProfile", "-NonInteractive", "-Command", script])
-    .env("TESS_WV2", file)
-    .creation_flags(NO_WINDOW)
-    .output()
-    .map(|o| String::from_utf8_lossy(&o.stdout).trim() == "ok")
-    .unwrap_or(false)
+  crate::signed_by(file, "Microsoft Corporation")
 }
 
 fn install() -> Result<(), String> {
