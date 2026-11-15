@@ -99,7 +99,16 @@ export function addWidget(items: Placed[], id: WidgetId): Placed[] {
 
 // ---------- menu ----------
 export type MenuSection = { label: string; items: string[] }
-export type MenuConfig = { sections: MenuSection[]; hidden: string[]; names: Record<string, string> }
+// Formato do menu lateral: Essencial (padrão) mostra só os itens do topo e guarda o resto em
+// "Todos os módulos"; Seções tem Fixados e seções que dobram; Trilho mostra uma área de cada vez.
+export type MenuStyle = 'essencial' | 'secoes' | 'trilho'
+export const MENU_STYLES: { id: MenuStyle; name: string; about: string }[] = [
+  { id: 'essencial', name: 'Essencial', about: 'Só o que você usa todo dia. O resto fica a um clique.' },
+  { id: 'secoes', name: 'Seções', about: 'Fixados no topo e seções que abrem e fecham.' },
+  { id: 'trilho', name: 'Trilho', about: 'As áreas em ícones, uma aberta de cada vez.' },
+]
+/** `top`: itens do topo (Essencial) ou fixados (Seções); sem ele, valem os primeiros do menu. */
+export type MenuConfig = { sections: MenuSection[]; hidden: string[]; names: Record<string, string>; style?: MenuStyle; top?: string[] }
 
 const MENU_PATHS = ALL_MODULES.filter((m) => m !== SETTINGS).map((m) => m.path)
 const byPath = (p: string) => ALL_MODULES.find((m) => m.path === p)
@@ -122,7 +131,17 @@ export function normalize(m: MenuConfig | undefined): MenuConfig {
     for (const p of missing) { other.items.push(p); if (m) hidden.add(p) }
   }
   hidden.delete('/')
-  return { sections, hidden: [...hidden], names: { ...(base.names ?? {}) } }
+  const style = MENU_STYLES.some((s) => s.id === base.style) ? base.style : undefined
+  const top = Array.isArray(base.top) ? [...new Set(base.top)].filter((p) => MENU_PATHS.includes(p)) : undefined
+  return { sections, hidden: [...hidden], names: { ...(base.names ?? {}) }, ...(style ? { style } : {}), ...(top ? { top } : {}) }
+}
+
+export const styleOf = (cfg: MenuConfig): MenuStyle => cfg.style ?? 'essencial'
+/** Itens do topo, na ordem: os escolhidos ou, sem escolha, os primeiros visíveis do menu. */
+export function topOf(cfg: MenuConfig): string[] {
+  const hidden = new Set(cfg.hidden)
+  if (cfg.top) return cfg.top.filter((p) => !hidden.has(p))
+  return cfg.sections.flatMap((s) => s.items).filter((p) => !hidden.has(p)).slice(0, styleOf(cfg) === 'secoes' ? 3 : 7)
 }
 
 export type ShownModule = Module & { original: string }
@@ -138,10 +157,22 @@ export function useMenu() {
     .filter((s) => s.items.length)
   const more = cfg.sections.flatMap((s) => s.items).filter((p) => hidden.has(p)).map(wrap).filter(Boolean) as ShownModule[]
   const visible = (path: string) => path === '/' || !hidden.has(path)
-  return { cfg, sections, more, visible }
+  const style = styleOf(cfg)
+  const top = topOf(cfg).map(wrap).filter(Boolean) as ShownModule[]
+  const inTop = new Set(top.map((m) => m.path))
+  // o que sobra fora do topo, ainda agrupado pelas seções
+  const rest = sections.map((s) => ({ label: s.label, items: s.items.filter((m) => !inTop.has(m.path)) })).filter((s) => s.items.length)
+  return { cfg, style, sections, top, rest, more, visible }
 }
 
 export const saveMenu = (m: MenuConfig) => setSetting('ui.menu', normalize(m))
+/** Troca só o formato: os itens que a pessoa pôs no topo continuam escolhidos. */
+export const setMenuStyle = (cfg: MenuConfig, style: MenuStyle) => saveMenu({ ...cfg, style })
+/** Põe o módulo no topo (ou nos fixados) ou tira de lá; ele continua na seção dele. */
+export function toggleTop(cfg: MenuConfig, path: string) {
+  const top = topOf(cfg)
+  void saveMenu({ ...cfg, top: top.includes(path) ? top.filter((p) => p !== path) : [...top, path] })
+}
 export function hideModule(cfg: MenuConfig, path: string) { if (path !== '/') void saveMenu({ ...cfg, hidden: [...new Set([...cfg.hidden, path])] }) }
 export function showModule(cfg: MenuConfig, path: string) { void saveMenu({ ...cfg, hidden: cfg.hidden.filter((p) => p !== path) }) }
 export function renameModule(cfg: MenuConfig, path: string, name: string) {
@@ -247,7 +278,7 @@ export function columnsFor(seg: Segment): Column[] {
 }
 
 /** Aplica o segmento: menu, Início e (se pedido) o quadro com as colunas, uma vez só. */
-export async function applySegment(seg: Segment, opts: { board: boolean }) {
+export async function applySegment(seg: Segment, opts: { board: boolean; style?: MenuStyle }) {
   if (opts.board) {
     const projects = await call<Project[]>('projects_list').catch(() => [] as Project[])
     if (!projects.some((p) => p.name.trim().toLowerCase() === seg.board.toLowerCase())) {
@@ -256,7 +287,7 @@ export async function applySegment(seg: Segment, opts: { board: boolean }) {
       await call<Board>('board_get', { projectId: id }).catch(() => null)
     }
   }
-  await setSetting('ui.menu', menuFor(seg))
+  await setSetting('ui.menu', normalize({ ...menuFor(seg), style: opts.style }))
   await setSetting('ui.home', homeFor(seg))
   await setSetting('ui.banner.closed', false)
   await setSetting('ui.segment', seg.id)

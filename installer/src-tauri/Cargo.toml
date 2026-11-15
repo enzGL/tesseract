@@ -1,6 +1,6 @@
 [package]
 name = "tesseract-setup"
-version = "0.3.2"
+version = "0.4.0"
 description = "Instalador do Tesseract"
 authors = ["Lanzi Labs"]
 license = "PolyForm-Noncommercial-1.0.0"

@@ -8,7 +8,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { ArrowDown, ArrowUp, GripVertical, Plus, RotateCcw, Trash2 } from 'lucide-react'
 import { ALL_MODULES } from '../app/nav'
 import { useStore } from '../data/api'
-import { DEFAULT_MENU, menuFor, saveMenu, segmentOf, useMenu, type MenuConfig } from '../data/layout'
+import { DEFAULT_MENU, MENU_STYLES, menuFor, saveMenu, segmentOf, setMenuStyle, useMenu, type MenuConfig } from '../data/layout'
 
 const field = 'h-9 rounded-lg border border-line-strong bg-raised px-2.5 text-[13.5px] outline-none focus:border-accent'
 
@@ -97,7 +97,7 @@ function SectionCard({ index, cfg }: { index: number; cfg: MenuConfig }) {
 
 export function MenuEditor() {
   const { settings } = useStore()
-  const { cfg } = useMenu()
+  const { cfg, style } = useMenu()
   const seg = segmentOf(settings['ui.segment'])
   const total = cfg.sections.reduce((n, s) => n + s.items.length, 0)
   return (
@@ -109,10 +109,26 @@ export function MenuEditor() {
           <p className="mt-1.5 max-w-[620px] text-[14px] leading-relaxed text-muted">Ligue só o que você usa, troque os nomes e a ordem. Tudo é salvo na hora e o menu ao lado já mostra o resultado.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {seg && <button type="button" onClick={() => void saveMenu(menuFor(seg))} className="flex h-9 items-center gap-2 rounded-lg border border-line-strong bg-card px-3.5 text-[13.5px] hover:bg-raised"><RotateCcw size={14} />Voltar ao modelo {seg.name}</button>}
-          <button type="button" onClick={() => void saveMenu(DEFAULT_MENU)} className="flex h-9 items-center gap-2 rounded-lg border border-line-strong bg-card px-3.5 text-[13.5px] hover:bg-raised">Mostrar todos os módulos</button>
+          {seg && <button type="button" onClick={() => void saveMenu({ ...menuFor(seg), style })} className="flex h-9 items-center gap-2 rounded-lg border border-line-strong bg-card px-3.5 text-[13.5px] hover:bg-raised"><RotateCcw size={14} />Voltar ao modelo {seg.name}</button>}
+          <button type="button" onClick={() => void saveMenu({ ...DEFAULT_MENU, style })} className="flex h-9 items-center gap-2 rounded-lg border border-line-strong bg-card px-3.5 text-[13.5px] hover:bg-raised">Mostrar todos os módulos</button>
         </div>
       </header>
+
+      <section aria-labelledby="menu-formato" className="flex flex-col gap-2.5">
+        <h2 id="menu-formato" className="text-[14px] font-semibold">Formato do menu</h2>
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-2.5" role="radiogroup" aria-labelledby="menu-formato">
+          {MENU_STYLES.map((m) => {
+            const on = m.id === style
+            return (
+              <button key={m.id} type="button" role="radio" aria-checked={on} onClick={() => { if (!on) void setMenuStyle(cfg, m.id) }}
+                className={`flex flex-col gap-1 rounded-xl border p-3.5 text-left transition-colors ${on ? 'border-accent bg-accent-soft' : 'border-line bg-card hover:border-line-strong'}`}>
+                <b className="text-[14.5px] font-semibold">{m.name}</b>
+                <span className="text-[12.5px] leading-snug text-muted">{m.about}</span>
+              </button>
+            )
+          })}
+        </div>
+      </section>
 
       <div className="flex flex-wrap items-start gap-5">
         <div className="flex min-w-0 flex-[999_1_560px] flex-col gap-4">
@@ -124,12 +140,12 @@ export function MenuEditor() {
         <aside aria-label="Ajuda do menu" className="flex max-w-[330px] min-w-[260px] flex-[1_1_280px] flex-col gap-4">
           <div className="flex flex-col gap-2 rounded-xl border border-line bg-card p-4 text-[13px] leading-relaxed text-muted">
             <b className="text-[14px] font-semibold text-fg">O que acontece ao desligar</b>
-            <span>O módulo sai do menu e vai para Mais módulos. Nada é apagado.</span>
+            <span>O módulo sai do menu e fica guardado no fim da lista. Nada é apagado.</span>
             <span>Os widgets dele saem da lista do Início, e o atalho dele some da tela inicial.</span>
             <span>A busca ({total} módulos) continua achando, e ligar de novo é um clique.</span>
           </div>
           <div className="rounded-xl bg-accent-soft px-4 py-3.5 text-[13px] leading-relaxed">
-            <b className="font-semibold">Dica:</b> clique com o botão direito em qualquer item do menu para esconder ou renomear sem vir até aqui.
+            <b className="font-semibold">Dica:</b> abra o menu da conta, no rodapé, e escolha Editar menu para arrastar, esconder e renomear ali mesmo. O botão direito num item também funciona.
           </div>
           <div className="flex flex-col gap-1.5 rounded-xl border border-line bg-card p-4 text-[13px]">
             <b className="text-[14px] font-semibold">Seu modelo</b>

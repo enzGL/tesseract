@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "0.3.2"
+version = "0.4.0"
 description = "A Tauri App"
 authors = ["you"]
 license = "PolyForm-Noncommercial-1.0.0"
@@ -42,6 +42,11 @@ base64 = "0.22"
 # trava do app (segurança do beta): HMAC-SHA1 do TOTP (RFC 6238)
 hmac = "0.12"
 sha1 = "0.10"
+# WhatsApp direto pelo app (Pro, pro/rust/whatsapp.rs): entra como aparelho conectado, sem API paga.
+# A sessão usa o mesmo SQLite cifrado do app (o libsqlite3-sys do [patch] abaixo), pelo diesel.
+whatsapp-rust = { version = "0.7", default-features = false, features = ["tokio-transport", "ureq-client", "sqlite-storage", "tokio-runtime"] }
+whatsapp-rust-sqlite-storage = "0.7"
+diesel = { version = "2.3", default-features = false, features = ["sqlite"] }
 
 # Windows Hello e "Windows bloqueado" para a trava do app (mesmas versões que o Tauri já usa)
 [target.'cfg(windows)'.dependencies]
@@ -58,3 +63,5 @@ opt-level = 3
 [patch.crates-io]
 # SQLite3 Multiple Ciphers no lugar do SQLite (banco criptografado). Ver vendor/libsqlite3-sys/TESSERACT_VENDOR.txt.
 libsqlite3-sys = { path = "vendor/libsqlite3-sys" }
+# Sessão do WhatsApp no mesmo SQLite cifrado. Ver vendor/whatsapp-rust-sqlite-storage/TESSERACT_VENDOR.txt.
+whatsapp-rust-sqlite-storage = { path = "vendor/whatsapp-rust-sqlite-storage" }

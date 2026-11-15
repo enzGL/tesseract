@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent as RMouseEvent } from 'react'
 import { ago, late, useCloudStatus, when } from '../data/cloud'
-import { NavLink, Outlet, useNavigate } from 'react-router'
-import { ArrowUp, BadgeCheck, BookOpen, ChevronDown, Circle, Keyboard, Loader2, Lock, Moon, MoreHorizontal, PanelLeft, Search, Sun, X } from 'lucide-react'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
+import { ArrowUp, BadgeCheck, BookOpen, ChevronRight, Circle, Keyboard, LayoutGrid, Loader2, Lock, Moon, PanelLeft, Pencil, Play, Search, Sun, X } from 'lucide-react'
 import { ALL_MODULES, SETTINGS, type Module } from './nav'
-import { hideModule, keepAll, labelOf, renameModule, showModule, useMenu, type MenuConfig, type ShownModule } from '../data/layout'
+import { hideModule, keepAll, labelOf, renameModule, showModule, toggleTop, topOf, useMenu, type MenuConfig, type ShownModule } from '../data/layout'
+import { MenuEdit } from './MenuEdit'
 import { SegmentPicker } from './SegmentPicker'
 import { call, message, PROVIDERS, setSetting, useScopes, useStore, type Prepared, type Provider, type Source } from '../data/api'
 import { Logo, useTheme } from './theme'
@@ -24,16 +25,13 @@ import { pro } from '@pro'
 import { ActivationHost } from '../components/License'
 import { useLicense } from '../data/license'
 
-// "0.1.0" vira "0.1": a versão aparece discreta ao lado do seletor de escopo.
-const APP_VERSION_SHORT = APP_VERSION.split('.').slice(0, 2).join('.')
-
 // Evento usado pela caixa de pedido do Início para mandar texto ao Chat.
 export const ASK_EVENT = 'tesseract:ask'
 /** Manda ao Chat. `onlyAsk`: a pessoa escolheu perguntar, não fazer (o Chat não oferece o cartão de ação). */
 export const askTesseract = (text: string, onlyAsk = false) => window.dispatchEvent(new CustomEvent(ASK_EVENT, { detail: { text, onlyAsk } }))
 
 const navItem = (active: boolean, collapsed: boolean) =>
-  `flex h-9 items-center gap-3 rounded-lg text-[14px] transition-colors ${collapsed ? 'justify-center' : 'px-2.5'} ${active ? 'bg-raised text-fg' : 'text-muted hover:bg-raised hover:text-fg'}`
+  `flex h-9 items-center gap-3 rounded-lg text-[14px] transition-colors ${collapsed ? 'justify-center' : 'px-2.5'} ${active ? 'bg-card font-medium text-fg shadow-[0_1px_2px_rgba(20,32,87,.08)] ring-1 ring-line' : 'text-muted hover:bg-raised hover:text-fg'}`
 
 function Item({ m, collapsed, onMenu }: { m: Module; collapsed: boolean; onMenu?: (e: RMouseEvent) => void }) {
   return (
@@ -89,34 +87,56 @@ function CommandPalette({ onClose }: { onClose: () => void }) {
   )
 }
 
-function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
+// Conta e app num lugar só: editar o menu, configurações, plano, atalhos, guia, tema e recolher.
+function AccountMenu({ collapsed, onToggle, onEdit }: { collapsed: boolean; onToggle: () => void; onEdit: () => void }) {
   const SCOPES = useScopes()
+  const navigate = useNavigate()
+  const keys = useBindings()
+  const { theme, toggle } = useTheme()
+  const lic = useLicense()
+  const cloud = useCloudText()
   const [scope, setScope] = useState('personal')
   const [open, setOpen] = useState(false)
   const current = SCOPES.find((s) => s.id === scope) ?? SCOPES[0]
+  const plan = lic?.status.plano === 'pro' ? 'Pro' : lic?.status.plano === 'leitura' ? 'venceu' : 'Grátis'
+  const row = 'flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[13.5px] hover:bg-hover'
+  const go = (to: string) => () => { navigate(to); setOpen(false) }
+  const dot = cloud.tone === 'bad' ? 'bg-[#B3261E]' : cloud.tone === 'warn' ? 'bg-[#D9A21B]' : 'bg-ok'
   return (
     <div className="relative">
-      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} title={current.name}
-        className={`flex h-10 w-full items-center gap-2.5 rounded-lg text-[14px] transition-colors hover:bg-raised ${collapsed ? 'justify-center' : 'px-2'}`}>
-        <span className="grid size-7 shrink-0 place-items-center rounded-md bg-hover text-[12px] font-semibold">{current.name.slice(0, 1)}</span>
-        {!collapsed && <>
-          <span className="truncate">{current.name}</span>
-          <span className="ml-auto font-mono text-[10.5px] tracking-wide text-faint" title={`Tesseract ${APP_VERSION}`}>v{APP_VERSION_SHORT}</span>
-          <ChevronDown size={14} className="text-muted" />
-        </>}
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-haspopup="menu" title={collapsed ? `${current.name} · ${cloud.text}` : cloud.title}
+        className={`flex h-11 w-full items-center gap-2.5 rounded-lg text-left transition-colors hover:bg-raised ${open ? 'bg-raised' : ''} ${collapsed ? 'justify-center' : 'px-1.5'}`}>
+        <span className="grid size-[30px] shrink-0 place-items-center rounded-[9px] bg-accent-soft text-[13px] font-semibold text-link">{current.name.slice(0, 1)}</span>
+        {!collapsed && (
+          <span className="flex min-w-0 flex-col">
+            <span className="truncate text-[13.5px] font-medium">{current.name}</span>
+            <span className={`flex items-center gap-1.5 truncate text-[11.5px] ${cloud.tone === 'bad' ? 'text-[#B3261E] dark:text-[#FF8A80]' : cloud.tone === 'warn' ? 'text-[#7A5A00] dark:text-[#F2C14E]' : 'text-faint'}`}><span className={`size-1.5 shrink-0 rounded-full ${dot}`} />{cloud.text}</span>
+          </span>
+        )}
       </button>
-      {open && (
-        <div className="anim-rise absolute bottom-12 left-0 z-30 w-56 rounded-xl border border-line-strong bg-raised p-1 shadow-2xl" style={{ animationDuration: '.2s' }}>
-          <div className="px-3 pt-2 pb-1 text-[12px] text-faint">Escopo</div>
-          {SCOPES.map((s) => (
-            <button key={s.id} type="button" onClick={() => { setScope(s.id); setOpen(false) }}
-              className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[14px] hover:bg-hover ${s.id === scope ? 'text-fg' : 'text-muted'}`}>
-              {s.name}
-              {s.id === scope && <Circle size={7} className="fill-accent text-accent" />}
-            </button>
-          ))}
+      {open && <>
+        <div className="fixed inset-0 z-20" onMouseDown={() => setOpen(false)} />
+        <div role="menu" aria-label="Conta e app" className="anim-rise absolute bottom-12 left-0 z-30 flex w-[236px] flex-col gap-px rounded-xl border border-line-strong bg-card p-1.5 shadow-2xl" style={{ animationDuration: '.2s' }}>
+          <button type="button" role="menuitem" className={`${row} bg-accent-soft font-medium text-link`} onClick={() => { onEdit(); setOpen(false) }}><Pencil size={15} strokeWidth={1.7} />Editar menu</button>
+          <button type="button" role="menuitem" className={row} onClick={go(SETTINGS.path)}><SETTINGS.icon size={15} strokeWidth={1.7} className="text-muted" />Configurações</button>
+          <button type="button" role="menuitem" className={row} onClick={go('/plano')}><BadgeCheck size={15} strokeWidth={1.7} className="text-muted" /><span className="flex-1">Seu plano</span><span className={`text-[12px] ${plan === 'Pro' ? 'text-link' : 'text-faint'}`}>{plan}</span></button>
+          <button type="button" role="menuitem" className={row} onClick={go('/atalhos')}><Keyboard size={15} strokeWidth={1.7} className="text-muted" />Atalhos</button>
+          <button type="button" role="menuitem" className={row} onClick={go('/guia')}><BookOpen size={15} strokeWidth={1.7} className="text-muted" />Guia do Tesseract</button>
+          <div className="mx-2 my-1 border-t border-line" />
+          <button type="button" role="menuitem" className={row} onClick={toggle}>{theme === 'dark' ? <Sun size={15} strokeWidth={1.7} className="text-muted" /> : <Moon size={15} strokeWidth={1.7} className="text-muted" />}<span className="flex-1">{theme === 'dark' ? 'Tema claro' : 'Tema escuro'}</span><span className="text-[12px] text-faint">{keys.theme}</span></button>
+          <button type="button" role="menuitem" className={row} onClick={() => { onToggle(); setOpen(false) }}><PanelLeft size={15} strokeWidth={1.7} className="text-muted" /><span className="flex-1">{collapsed ? 'Expandir menu' : 'Recolher menu'}</span><span className="text-[12px] text-faint">{keys.sidebar}</span></button>
+          {SCOPES.length > 1 && <>
+            <div className="mx-2 my-1 border-t border-line" />
+            <div className="px-2.5 pt-1 pb-0.5 text-[12px] text-faint">Escopo</div>
+            {SCOPES.map((s) => (
+              <button key={s.id} type="button" role="menuitemradio" aria-checked={s.id === scope} onClick={() => { setScope(s.id); setOpen(false) }} className={`${row} justify-between ${s.id === scope ? 'text-fg' : 'text-muted'}`}>
+                {s.name}{s.id === scope && <Circle size={7} className="fill-accent text-accent" />}
+              </button>
+            ))}
+          </>}
+          <button type="button" onClick={go('/configuracoes')} title={cloud.title} className="px-2.5 pt-2 pb-1 text-left text-[11.5px] text-faint hover:text-fg">Tesseract {APP_VERSION} · {cloud.text.toLowerCase()}</button>
         </div>
-      )}
+      </>}
     </div>
   )
 }
@@ -140,6 +160,9 @@ function SetupCard({ onClose }: { onClose: () => void }) {
 }
 
 const PROMO_KEY = 'tesseract.promo.closed'
+const OPEN_KEY = 'tesseract.menu.open'
+const isAt = (pathname: string, path: string) => (path === '/' ? pathname === '/' : pathname.startsWith(path))
+const sectionLabel = 'px-2.5 pt-3 pb-1 text-[12px] text-faint'
 
 function Sidebar({ collapsed, onToggle, onSearch }: { collapsed: boolean; onToggle: () => void; onSearch: () => void }) {
   // Cartão de boas-vindas: some quando há cérebro conectado ou quando a pessoa fecha (lembrado entre aberturas).
@@ -147,62 +170,132 @@ function Sidebar({ collapsed, onToggle, onSearch }: { collapsed: boolean; onTogg
   const [dismissed, setDismissed] = useState(() => localStorage.getItem(PROMO_KEY) === '1')
   const promo = !dismissed && !settings['vault.path']
   const closePromo = () => { localStorage.setItem(PROMO_KEY, '1'); setDismissed(true) }
-  const { theme, toggle } = useTheme()
   const keys = useBindings()
   const menu = useMenu()
-  const [more, setMore] = useState(false)
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const running = useRunning()
+  const [editing, setEditing] = useState(false)
+  const mini = collapsed && !editing
   const [ctx, setCtx] = useState<{ m: ShownModule; hidden: boolean; x: number; y: number } | null>(null)
   const openMenu = (m: ShownModule, hidden: boolean) => (e: RMouseEvent) => { e.preventDefault(); setCtx({ m, hidden, x: e.clientX, y: e.clientY }) }
-  return (
-    <aside className={`flex shrink-0 flex-col px-3 pt-4 pb-3 transition-[width] duration-300 ${collapsed ? 'w-[68px]' : 'w-[260px]'}`}>
-      {ctx && <ItemMenu {...ctx} cfg={menu.cfg} onClose={() => setCtx(null)} />}
-      <div className={`flex items-center ${collapsed ? 'flex-col gap-2' : 'justify-between px-1'}`}>
-        <NavLink to="/" className="flex items-center gap-2.5" aria-label="Tesseract, início">
-          <Logo className="size-8" />
-          {!collapsed && <span className="font-serif text-[18px] tracking-[-0.01em] text-accent dark:text-link">Tesseract</span>}
-        </NavLink>
-        <div className={`flex ${collapsed ? 'flex-col' : ''} gap-0.5`}>
-          <button type="button" onClick={toggle} aria-label={theme === 'dark' ? 'Usar tema claro' : 'Usar tema escuro'} title={theme === 'dark' ? 'Tema claro' : 'Tema escuro'} className="grid size-8 place-items-center rounded-md text-muted transition-colors hover:bg-raised hover:text-fg">
-            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
-          <button type="button" onClick={onToggle} aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'} className="grid size-8 place-items-center rounded-md text-muted transition-colors hover:bg-raised hover:text-fg"><PanelLeft size={16} /></button>
-        </div>
-      </div>
+  const item = (m: ShownModule, hidden = false) => <Item key={m.path} m={m} collapsed={mini} onMenu={openMenu(m, hidden)} />
+  const has = (items: ShownModule[]) => items.some((m) => isAt(pathname, m.path))
 
-      <nav aria-label="Módulos" className="mt-5 flex flex-1 flex-col overflow-y-auto">
-        <button type="button" onClick={onSearch} title={collapsed ? `Buscar (${keys.palette})` : undefined} className={navItem(false, collapsed)}>
-          <Search size={16} strokeWidth={1.7} className="shrink-0" />
-          {!collapsed && <><span>Buscar</span><span className="ml-auto text-[12px] text-faint">{keys.palette}</span></>}
-        </button>
-        {menu.sections.map((s, k) => (
-          <div key={k} className="mt-1 flex flex-col gap-0.5">
-            {s.label && (collapsed ? <div className="mx-2 my-2 border-t border-line" /> : <div className="px-2.5 pt-3 pb-1 text-[12.5px] text-faint">{s.label}</div>)}
-            {s.items.map((m) => <Item key={m.path} m={m} collapsed={collapsed} onMenu={openMenu(m, false)} />)}
-          </div>
-        ))}
-        {menu.more.length > 0 && (
-          <div className="mt-1 flex flex-col gap-0.5">
-            <button type="button" onClick={() => setMore((o) => !o)} aria-expanded={more} title={collapsed ? `Mais módulos (${menu.more.length})` : undefined} className={navItem(false, collapsed)}>
-              <MoreHorizontal size={16} strokeWidth={1.7} className="shrink-0" />
-              {!collapsed && <><span>Mais módulos</span><span className="ml-auto text-[12px] text-faint">{menu.more.length}</span></>}
-            </button>
-            {more && menu.more.map((m) => <Item key={m.path} m={m} collapsed={collapsed} onMenu={openMenu(m, true)} />)}
-          </div>
+  // Essencial: "Todos os módulos" abre sozinho quando a tela atual mora lá
+  const [all, setAll] = useState(false)
+  const inRest = menu.rest.some((s) => has(s.items)) || has(menu.more)
+  useEffect(() => { if (inRest) setAll(true) }, [inRest])
+  // Seções: o que está aberto fica lembrado entre aberturas
+  const [open, setOpen] = useState<Record<string, boolean>>(() => { try { return JSON.parse(localStorage.getItem(OPEN_KEY) ?? '{}') as Record<string, boolean> } catch { return {} } })
+  const flip = (label: string, now: boolean) => setOpen((o) => { const n = { ...o, [label]: !now }; try { localStorage.setItem(OPEN_KEY, JSON.stringify(n)) } catch { /* sem armazenamento */ } return n })
+  // Trilho: a área aberta é a da tela atual, até a pessoa clicar em outra
+  const [area, setArea] = useState<number | null>(null)
+  useEffect(() => setArea(null), [pathname])
+  const here = Math.max(0, menu.sections.findIndex((s) => has(s.items)))
+  const shownArea = menu.sections[Math.min(area ?? here, menu.sections.length - 1)]
+  const startTimer = () => { navigate('/horas'); setTimeout(() => window.dispatchEvent(new Event(TIMER_FOCUS)), 150) }
+
+  const fold = (label: string, items: ShownModule[], hidden = false) => {
+    const isOpen = open[label] ?? has(items)
+    return (
+      <div key={label} className="flex flex-col gap-0.5">
+        {mini ? <div className="mx-2 my-2 border-t border-line" /> : (
+          <button type="button" onClick={() => flip(label, isOpen)} aria-expanded={isOpen} className="flex h-8 items-center gap-2 rounded-lg px-2.5 text-left text-[13px] font-medium text-muted hover:bg-raised hover:text-fg">
+            <ChevronRight size={13} strokeWidth={2} className={`shrink-0 transition-transform ${isOpen ? 'rotate-90' : ''}`} /><span className="flex-1 truncate">{label}</span>{!isOpen && <span className="text-[12px] font-normal text-faint">{items.length}</span>}
+          </button>
         )}
-        <div className="mx-1 my-3 border-t border-line" />
-        <Item m={SETTINGS} collapsed={collapsed} />
-        <PlanItem collapsed={collapsed} />
-        <NavLink to="/atalhos" title={collapsed ? 'Atalhos' : undefined} className={({ isActive }) => navItem(isActive, collapsed)}><Keyboard size={16} strokeWidth={1.7} className="shrink-0" />{!collapsed && 'Atalhos'}</NavLink>
-        <NavLink to="/guia" title={collapsed ? 'Guia do Tesseract' : undefined} className={({ isActive }) => navItem(isActive, collapsed)}><BookOpen size={16} strokeWidth={1.7} className="shrink-0" />{!collapsed && 'Guia do Tesseract'}</NavLink>
-      </nav>
+        {(isOpen || mini) && items.map((m) => item(m, hidden))}
+      </div>
+    )
+  }
+
+  return (
+    <aside className={`flex shrink-0 flex-col px-3 pt-4 pb-3 transition-[width] duration-300 ${mini ? 'w-[68px]' : 'w-[260px]'}`}>
+      {ctx && <ItemMenu {...ctx} cfg={menu.cfg} onClose={() => setCtx(null)} />}
+      {editing ? <MenuEdit onDone={() => setEditing(false)} /> : <>
+        <div className={`flex items-center ${mini ? 'flex-col gap-2' : 'px-1.5'}`}>
+          <NavLink to="/" className="flex items-center gap-2.5" aria-label="Tesseract, início">
+            <Logo className="size-8" />
+            {!mini && <span className="font-serif text-[18px] tracking-[-0.01em] text-accent dark:text-link">Tesseract</span>}
+          </NavLink>
+          {mini && <button type="button" onClick={onToggle} aria-label="Expandir menu" title={`Expandir menu (${keys.sidebar})`} className="grid size-8 place-items-center rounded-md text-muted transition-colors hover:bg-raised hover:text-fg"><PanelLeft size={16} /></button>}
+        </div>
+
+        {mini ? (
+          <button type="button" onClick={onSearch} title={`Buscar (${keys.palette})`} aria-label="Buscar" className={`mt-4 ${navItem(false, true)}`}><Search size={16} strokeWidth={1.7} /></button>
+        ) : (
+          <button type="button" onClick={onSearch} className="mt-4 flex h-[38px] shrink-0 items-center gap-2.5 rounded-xl border border-line bg-card px-3 text-left text-[13.5px] text-faint transition-colors hover:border-line-strong">
+            <Search size={15} strokeWidth={1.8} className="shrink-0" /><span className="flex-1 truncate">Buscar ou ir para…</span><span className="text-[11.5px]">{keys.palette}</span>
+          </button>
+        )}
+
+        {menu.style === 'trilho' ? (
+          <div className="mt-3 flex min-h-0 flex-1 gap-2">
+            <div role="tablist" aria-label="Áreas" aria-orientation="vertical" className={`flex shrink-0 flex-col gap-1 overflow-y-auto ${mini ? 'w-full items-center' : 'w-[58px] border-r border-line pr-2'}`}>
+              {menu.sections.map((s, i) => {
+                const Icon = s.items[0].icon
+                const on = s === shownArea
+                const name = s.label || 'Início'
+                return (
+                  <button key={i} type="button" role="tab" aria-selected={on} title={name} onClick={() => { setArea(i); if (mini) navigate(s.items[0].path) }}
+                    className={`flex w-full flex-col items-center justify-center gap-1 rounded-xl py-2 text-[10.5px] transition-colors ${on ? 'bg-accent-soft font-medium text-fg' : 'text-muted hover:bg-raised hover:text-fg'}`}>
+                    <Icon size={17} strokeWidth={on ? 1.9 : 1.7} className={on ? 'text-link' : ''} />{!mini && <span className="w-full truncate px-0.5 text-center">{name}</span>}
+                  </button>
+                )
+              })}
+            </div>
+            {!mini && shownArea && (
+              <nav aria-label={shownArea.label || 'Início'} className="flex min-w-0 flex-1 flex-col gap-0.5 overflow-y-auto">
+                <div className="px-2.5 pt-1 pb-2 font-serif text-[16px]">{shownArea.label || 'Início'}</div>
+                {shownArea.items.map((m) => item(m))}
+                {menu.more.length > 0 && <div className="mt-2 border-t border-line pt-1">{fold('Mais módulos', menu.more, true)}</div>}
+              </nav>
+            )}
+          </div>
+        ) : (
+          <nav aria-label="Módulos" className="mt-3 flex min-h-0 flex-1 flex-col overflow-y-auto">
+            {menu.style === 'secoes' && !mini && menu.top.length > 0 && <div className={sectionLabel}>Fixados</div>}
+            <div className="flex flex-col gap-0.5">{menu.top.map((m) => item(m))}</div>
+            {menu.style === 'secoes' ? <>
+              {(menu.rest.length > 0 || menu.more.length > 0) && <div className="mx-2.5 my-2 border-t border-line" />}
+              {menu.rest.map((s, k) => s.label ? fold(s.label, s.items) : <div key={k} className="flex flex-col gap-0.5">{s.items.map((m) => item(m))}</div>)}
+              {menu.more.length > 0 && fold('Mais módulos', menu.more, true)}
+            </> : (menu.rest.length > 0 || menu.more.length > 0) && <>
+              <div className="mx-2.5 my-2 border-t border-line" />
+              <button type="button" onClick={() => setAll((o) => !o)} aria-expanded={all} title={mini ? 'Todos os módulos' : undefined} className={navItem(false, mini)}>
+                <LayoutGrid size={16} strokeWidth={1.7} className="shrink-0" />
+                {!mini && <><span className="flex-1 text-left text-[13.5px]">Todos os módulos</span><span className="text-[12px] text-faint">{menu.rest.reduce((n, s) => n + s.items.length, 0) + menu.more.length}</span><ChevronRight size={14} className={`transition-transform ${all ? 'rotate-90' : ''}`} /></>}
+              </button>
+              {all && <>
+                {menu.rest.map((s, k) => (
+                  <div key={k} className="flex flex-col gap-0.5">
+                    {s.label && (mini ? <div className="mx-2 my-2 border-t border-line" /> : <div className={sectionLabel}>{s.label}</div>)}
+                    {s.items.map((m) => item(m))}
+                  </div>
+                ))}
+                {!mini && menu.more.length > 0 && (
+                  <div className="flex flex-col gap-0.5 opacity-70">
+                    {mini ? <div className="mx-2 my-2 border-t border-line" /> : <div className={sectionLabel}>Fora do menu</div>}
+                    {menu.more.map((m) => item(m, true))}
+                  </div>
+                )}
+              </>}
+            </>}
+          </nav>
+        )}
+      </>}
 
       <div className="flex flex-col gap-2 pt-3">
-        {pro.built && <TimerMini collapsed={collapsed} />}
-        {!collapsed && promo && <SetupCard onClose={closePromo} />}
-        <SyncLine collapsed={collapsed} />
-        <CloudLine collapsed={collapsed} />
-        <div className={`flex items-center gap-1 ${collapsed ? 'flex-col' : ''}`}>
-          <div className="min-w-0 flex-1"><WorkspaceSwitcher collapsed={collapsed} /></div>
+        {pro.built && running && <TimerMini collapsed={mini} />}
+        {!mini && !editing && promo && <SetupCard onClose={closePromo} />}
+        <SyncLine collapsed={mini} />
+        <div className={`flex items-center gap-1.5 border-t border-line pt-2 ${mini ? 'flex-col' : ''}`}>
+          <div className={mini ? '' : 'min-w-0 flex-1'}><AccountMenu collapsed={mini} onToggle={onToggle} onEdit={() => setEditing(true)} /></div>
+          {pro.built && !running && (
+            <button type="button" onClick={startTimer} aria-label={`Iniciar cronômetro (${keys.timer})`} title={`Iniciar cronômetro · ${keys.timer}`}
+              className="grid size-[34px] shrink-0 place-items-center rounded-full bg-accent text-on-accent transition-colors hover:bg-accent-strong"><Play size={13} fill="currentColor" className="ml-0.5" /></button>
+          )}
           <LockButton />
         </div>
       </div>
@@ -517,7 +610,7 @@ function ItemMenu({ m, hidden, x, y, cfg, onClose }: { m: ShownModule; hidden: b
     return () => window.removeEventListener('keydown', esc)
   }, [onClose])
   const item = 'flex w-full items-center rounded-md px-2.5 py-2 text-left text-[13.5px] hover:bg-hover disabled:opacity-40 disabled:hover:bg-transparent'
-  const top = Math.min(y, window.innerHeight - 230)
+  const top = Math.min(y, window.innerHeight - 270)
   return (
     <div className="fixed inset-0 z-50" onMouseDown={onClose} onContextMenu={(e) => { e.preventDefault(); onClose() }}>
       <div role="menu" aria-label={`Opções de ${m.label}`} onMouseDown={(e) => e.stopPropagation()} style={{ left: x, top }}
@@ -526,6 +619,7 @@ function ItemMenu({ m, hidden, x, y, cfg, onClose }: { m: ShownModule; hidden: b
           {hidden
             ? <button type="button" role="menuitem" className={item} onClick={() => { showModule(cfg, m.path); onClose() }}>Mostrar no menu</button>
             : <button type="button" role="menuitem" className={item} disabled={m.path === '/'} onClick={() => { hideModule(cfg, m.path); onClose() }}>Esconder do menu</button>}
+          {!hidden && cfg.style !== 'trilho' && <button type="button" role="menuitem" className={item} onClick={() => { toggleTop(cfg, m.path); onClose() }}>{topOf(cfg).includes(m.path) ? 'Tirar do topo' : cfg.style === 'secoes' ? 'Fixar no topo' : 'Pôr no topo'}</button>}
           <button type="button" role="menuitem" className={item} onClick={() => setName(m.label)}>Renomear</button>
           {m.label !== m.original && <button type="button" role="menuitem" className={item} onClick={() => { renameModule(cfg, m.path, ''); onClose() }}>Voltar ao nome {m.original}</button>}
           <div className="mx-2 my-1 border-t border-line" />
@@ -560,18 +654,6 @@ function LockButton() {
 }
 
 // Dois computadores (fase 12, item 18): "Em dia · X com a vez" ou "Os dois mexeram · N para ver".
-// Item "Seu plano" no rodapé do menu, com a situação da licença ao lado.
-function PlanItem({ collapsed }: { collapsed: boolean }) {
-  const v = useLicense()
-  const tag = v?.status.plano === 'pro' ? 'Pro' : v?.status.plano === 'leitura' ? 'venceu' : 'Grátis'
-  return (
-    <NavLink to="/plano" title={collapsed ? `Seu plano (${tag})` : undefined} className={({ isActive }) => navItem(isActive, collapsed)}>
-      <BadgeCheck size={16} strokeWidth={1.7} className="shrink-0" />
-      {!collapsed && <><span>Seu plano</span><span className={`ml-auto text-[12px] ${v?.status.plano === 'pro' ? 'text-link' : 'text-faint'}`}>{tag}</span></>}
-    </NavLink>
-  )
-}
-
 function SyncLine({ collapsed }: { collapsed: boolean }) {
   const st = useSyncStatus()
   if (!st?.enabled) return null
@@ -586,21 +668,13 @@ function SyncLine({ collapsed }: { collapsed: boolean }) {
   )
 }
 
-// Status local + backup na nuvem (fase 12): verde em dia, vermelho atrasado ou com erro; leva às Configurações.
-function CloudLine({ collapsed }: { collapsed: boolean }) {
+// Status local + backup na nuvem (fase 12), em texto para o botão da conta: em dia, atrasado ou com erro.
+function useCloudText(): { text: string; title: string; tone: 'ok' | 'warn' | 'bad' } {
   const st = useCloudStatus()
-  if (st?.peekAt) return (
-    <NavLink to="/configuracoes" title="Uma versão do backup está aberta só para consultar" className={`flex items-center gap-2 text-[12.5px] text-[#7A5A00] hover:text-fg dark:text-[#F2C14E] ${collapsed ? 'justify-center' : 'px-2.5'}`}>
-      <span className="size-1.5 rounded-full bg-[#D9A21B]" />{!collapsed && `Consultando: ${when(st.peekAt).toLowerCase()}`}
-    </NavLink>
-  )
+  if (st?.peekAt) return { text: `Consultando: ${when(st.peekAt).toLowerCase()}`, title: 'Uma versão do backup está aberta só para consultar', tone: 'warn' }
   const on = !!st?.enabled
   const bad = !!st && late(st)
   const text = !on ? 'Local · offline' : bad ? (st!.lastError ? 'Backup na nuvem com erro' : `Nuvem atrasada · ${ago(st!.lastAt)}`) : `Local · nuvem ${ago(st!.lastAt)}`
   const title = !on ? 'Tudo local, sem nuvem' : bad ? `Backup na nuvem: ${st!.lastError || 'passou do intervalo sem backup'}` : `Backup criptografado na nuvem: último ${ago(st!.lastAt)}`
-  return (
-    <NavLink to="/configuracoes" title={title} className={`flex items-center gap-2 text-[12.5px] hover:text-fg ${bad ? 'text-[#B3261E] dark:text-[#FF8A80]' : 'text-faint'} ${collapsed ? 'justify-center' : 'px-2.5'}`}>
-      <span className={`size-1.5 rounded-full ${bad ? 'bg-[#B3261E]' : 'bg-ok'}`} />{!collapsed && text}
-    </NavLink>
-  )
+  return { text, title, tone: bad ? 'bad' : 'ok' }
 }

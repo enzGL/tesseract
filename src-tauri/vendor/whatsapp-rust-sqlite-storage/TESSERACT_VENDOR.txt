@@ -1,0 +1,5 @@
+whatsapp-rust-sqlite-storage 0.7.0, cópia do crates.io sem mudança no código.
+Origem: https://crates.io/crates/whatsapp-rust-sqlite-storage/0.7.0 (checksum ee70216db150b33c1c7cb01dc81e37f70b3edf8c24cebcd75a7ade5c011720d1), copiado em 2026-11-14.
+Única mudança: no Cargo.toml, libsqlite3-sys de "0.37" para "0.39", para usar o mesmo SQLite cifrado do app
+(vendor/libsqlite3-sys, SQLite3 Multiple Ciphers). Só pode haver um libsqlite3-sys no programa.
+Ao atualizar o whatsapp-rust: copiar a versão nova de novo e refazer essa troca.

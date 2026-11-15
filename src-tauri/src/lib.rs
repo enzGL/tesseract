@@ -84,6 +84,9 @@ mod externa {
 #[path = "../../pro/rust/extrato.rs"]
 mod extrato;
 #[cfg(pro)]
+#[path = "../../pro/rust/whatsapp.rs"]
+mod whatsapp;
+#[cfg(pro)]
 #[path = "../../pro/rust/pro.rs"]
 mod pro;
 

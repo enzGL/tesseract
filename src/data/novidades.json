@@ -1,5 +1,22 @@
 [
   {
+    "version": "0.4.0",
+    "date": "2026-11-15",
+    "seguranca": true,
+    "todos": [
+      "Menu lateral em três formatos: Essencial (o novo padrão), Seções e Trilho. Escolha no começo ou em Menu do seu jeito",
+      "Editar o menu no próprio menu: arraste, esconda, ponha no topo e renomeie os itens",
+      "Rodapé do menu em uma linha: sua conta com o status do backup, o cronômetro e um menu com configurações, plano, atalhos, guia e tema",
+      "Segurança: um texto dentro de uma nota não consegue mais se passar por pergunta sua para a IA",
+      "Segurança: o download de modelos da IA só aceita nomes do catálogo"
+    ],
+    "pro": [
+      "Prospecção: envie a mensagem pelo WhatsApp sem sair do Tesseract. Conecte seu número pelo QR code, como um aparelho conectado; o app só envia, não lê suas conversas",
+      "CRM: o cartão do funil abre o detalhe com um clique em qualquer ponto",
+      "Segurança: nome de lead ou modelo de mensagem com uma ordem escondida não vira recomendação dos bots nem muda a mensagem de abordagem"
+    ]
+  },
+  {
     "version": "0.3.2",
     "date": "2026-11-14",
     "seguranca": true,
