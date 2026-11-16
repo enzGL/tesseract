@@ -8,7 +8,7 @@ import { Button } from './ui'
 
 // Atualização automática (fase 13; Rust em src-tauri/src/update.rs). Um app só para Grátis e Pro: toda
 // versão vai para todo mundo e o que é do Pro fica travado sem a licença.
-//  - Ao abrir (se ligado em Configurações), o app pergunta ao site se há versão nova. Achou: uma faixa
+//  - Ao abrir e a cada 6 horas (se ligado em Configurações), o app pergunta ao site se há versão nova. Achou: uma faixa
 //    no topo com o que mudou (para todos e no Pro), "Atualizar agora" e "Ao fechar o app".
 //  - Correção de segurança: a faixa não tem "depois".
 //  - Depois de atualizar, o cartão "O que há de novo" mostra o que mudou desde a versão anterior.
@@ -76,24 +76,27 @@ function Lista({ todos, pro }: { todos: string[]; pro: string[] }) {
   )
 }
 
-/** Faixa no topo do app quando há versão nova. A checagem roda uma vez por abertura. */
+/** Faixa no topo do app quando há versão nova. A checagem roda ao abrir e a cada 6 horas. */
 export function UpdateBanner({ testMode }: { testMode: boolean }) {
   const { ready, settings } = useStore()
   const c = useFound()
   const a = c?.available ?? null
-  const [closed, setClosed] = useState(false)
+  const [closed, setClosed] = useState('') // versão cuja faixa a pessoa fechou; uma mais nova volta a aparecer
   const [open, setOpen] = useState(false)
   const { install, installing, later, pct, error } = useInstall()
   const auto = settings['update.auto'] !== false
   useEffect(() => {
     if (!ready || !auto || inBrowser || testMode) return
-    const t = setTimeout(() => { void checkUpdate().catch(() => {}) }, 8000) // sem pressa: depois da abertura
-    return () => clearTimeout(t)
+    const run = () => { void checkUpdate().catch(() => {}) }
+    const t = setTimeout(run, 8000) // sem pressa: depois da abertura
+    // e de novo a cada 6 horas: quem deixa o app aberto por dias também fica sabendo da versão nova
+    const every = setInterval(run, 6 * 60 * 60 * 1000)
+    return () => { clearTimeout(t); clearInterval(every) }
   }, [ready, auto, testMode])
   return (
     <>
       <WhatsNew testMode={testMode} />
-      {a && !(closed && !a.seguranca) && (
+      {a && !(closed === a.version && !a.seguranca) && (
         <div className={`sticky top-0 z-20 border-b px-5 py-2 text-[13px] ${a.seguranca ? 'border-[#B3261E]/30 bg-[#FBE9E7] dark:bg-[#3A1512]' : 'border-accent/30 bg-accent-soft'}`}>
           <div className="flex flex-wrap items-center gap-3">
             {a.seguranca ? <ShieldAlert size={15} className="text-[#B3261E] dark:text-[#FF8A80]" /> : <Download size={15} className="text-link" />}
@@ -113,7 +116,7 @@ export function UpdateBanner({ testMode }: { testMode: boolean }) {
                 : <>
                   <button type="button" onClick={() => void install('agora')} className="rounded-md bg-accent px-3 py-1 font-medium text-on-accent hover:bg-accent-strong">Atualizar agora</button>
                   <button type="button" onClick={() => void install('ao-fechar')} title="Baixa agora e instala quando você fechar o Tesseract" className="rounded-md border border-line-strong px-3 py-1 font-medium hover:bg-hover">Ao fechar o app</button>
-                  {!a.seguranca && <button type="button" aria-label="Depois" title="Depois" onClick={() => setClosed(true)} className="grid size-7 place-items-center rounded-md text-muted hover:bg-hover"><X size={14} /></button>}
+                  {!a.seguranca && <button type="button" aria-label="Depois" title="Depois" onClick={() => setClosed(a.version)} className="grid size-7 place-items-center rounded-md text-muted hover:bg-hover"><X size={14} /></button>}
                 </>}
           </div>
           {open && <div className="mt-2.5 mb-1 max-w-[760px] pl-7"><Lista todos={a.todos} pro={a.pro} /></div>}
@@ -232,7 +235,7 @@ export function UpdatesCard({ Card }: { Card: (p: { title: string; desc: string;
         {a && !later && <Button icon={Download} disabled={installing} onClick={() => void install('agora')}>{installing ? `Baixando${pct !== null ? ` ${pct}%` : '…'}` : `Atualizar para a ${a.version}`}</Button>}
         {later && <span className="text-[13.5px] text-link">Pronta: instala quando você fechar o app.</span>}
         {state === 'none' && !a && <span className="text-[13.5px] text-ok">Você está na versão mais recente.</span>}
-        <button type="button" onClick={showWhatsNew} className="text-[13.5px] text-link underline-offset-2 hover:underline">Ver o que mudou nesta versão</button>
+        <Button variant="ghost" icon={Sparkles} onClick={showWhatsNew}>Ver o que mudou nesta versão</Button>
       </div>
       {a && (a.todos.length + a.pro.length > 0) && <div className="rounded-lg border border-line bg-raised/50 p-3.5"><p className="mb-2 text-[13px] text-muted">O que vem na {a.version}</p><Lista todos={a.todos} pro={a.pro} /></div>}
       {(error || installError) && <p className="text-[13px] text-danger">{error || installError}</p>}

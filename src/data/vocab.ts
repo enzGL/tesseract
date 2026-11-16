@@ -94,8 +94,8 @@ export function term(k: TermKey, cap = false) {
   const t = current.terms?.[k]?.trim() || DEFAULT_TERMS[k]
   return cap ? t.charAt(0).toUpperCase() + t.slice(1) : t
 }
-/** "Nova oportunidade", "Novo tratamento": pelo fim da palavra. */
-export const novo = (k: TermKey) => { const t = term(k); return `${/a$/i.test(t) ? 'Nova' : 'Novo'} ${t}` }
+/** "Nova oportunidade", "Novo tratamento": pelo fim da primeira palavra (-a, -dade, -ção, -são, -gem são femininas). */
+export const novo = (k: TermKey) => { const t = term(k); return `${/(a|dade|ção|são|gem)$/i.test(t.trim().split(/\s+/)[0]) ? 'Nova' : 'Novo'} ${t}` }
 export const stageHidden = (id: StageId) => !!current.stages?.[id]?.hidden
 /** Estágios abertos que aparecem no funil: os não escondidos, mais os escondidos que ainda têm algo dentro. */
 export const shownStages = (used: Set<string> = new Set()) => OPEN_STAGES.filter((s) => !stageHidden(s.id) || used.has(s.id))

@@ -387,7 +387,8 @@ export async function call<T>(cmd: string, args: Record<string, unknown> = {}): 
 }
 
 // Erros do Rust chegam como string; os do JS como Error.
-export const message = (e: unknown) => (e instanceof Error ? e.message : String(e))
+/** Texto do erro para a tela, com a primeira letra maiúscula (o backend escreve as mensagens em minúscula). */
+export const message = (e: unknown) => { const m = e instanceof Error ? e.message : String(e); return m.charAt(0).toUpperCase() + m.slice(1) }
 
 // ---------- estado compartilhado: organizações e configurações ----------
 type State = { ready: boolean; orgs: Org[]; settings: Settings; error: string | null; index: { running: boolean; last: IndexReport | null; error: string | null }; embed: { running: boolean; done: number; total: number; error: string | null } }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { Check, Undo2 } from 'lucide-react'
+import { Check, MessageCircle, Undo2 } from 'lucide-react'
+import { Button } from './ui'
 import { message } from '../data/api'
 import { KIND_NAME, brlCents, describe, doneToday, logDone, markUndone, perform, undo, type Action, type Ctx, type Done } from '../data/commands'
 
@@ -135,7 +136,7 @@ export function ActionPlan({ actions, ctx, onDone, onCancel, onAsk, compact }: {
           {busy ? 'Fazendo…' : many || list[0].kind === 'sprint' ? `Fazer ${count === 1 ? 'a marcada' : `as ${count} marcadas`}` : list[0].kind === 'tx' ? 'Lançar' : list[0].kind === 'move' ? 'Mover' : 'Criar'}{compact && !busy ? ' · Enter' : ''}
         </button>
         <button type="button" onClick={onCancel} className="h-10 rounded-[10px] px-3 text-[14px] text-muted hover:bg-hover hover:text-fg">Cancelar{compact ? ' · Esc' : ''}</button>
-        {onAsk && <button type="button" onClick={onAsk} className="text-[13px] text-link hover:underline">Perguntar ao Chat em vez disso</button>}
+        {onAsk && <Button size="sm" icon={MessageCircle} onClick={onAsk}>Perguntar ao Chat em vez disso</Button>}
       </div>
     </section>
   )

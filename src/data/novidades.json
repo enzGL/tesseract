@@ -1,5 +1,31 @@
 [
   {
+    "version": "0.4.2",
+    "date": "2026-11-16",
+    "seguranca": false,
+    "todos": [
+      "O app procura atualização também a cada 6 horas enquanto fica aberto, e o aviso fechado volta quando sai uma versão mais nova",
+      "Ações que eram links pequenos viraram botões, e as mensagens de erro começam com letra maiúscula"
+    ],
+    "pro": [
+      "Mensagem de abordagem: o texto do seu ICP vira a base, como um briefing, e a IA escreve a mensagem do zero em vez de copiar",
+      "Mensagem de abordagem: o cumprimento segue a hora do dia (bom dia, boa tarde ou boa noite)",
+      "Mensagem de abordagem: se você editar o texto antes de personalizar, a IA parte do que você escreveu",
+      "Mensagem de abordagem pelo CRM: a IA usa também a nota e as avaliações da empresa no Google",
+      "CRM: a janela de criar diz \"Nova oportunidade\"",
+      "Bots, CRM, Prospecção e Relatórios: ações em botão e seções recolhidas com título mais legível"
+    ]
+  },
+  {
+    "version": "0.4.1",
+    "date": "2026-11-15",
+    "seguranca": false,
+    "todos": [],
+    "pro": [
+      "Prospecção: a tela não abre mais uma janela preta de comando ao conferir o programa do Google Maps"
+    ]
+  },
+  {
     "version": "0.4.0",
     "date": "2026-11-15",
     "seguranca": true,

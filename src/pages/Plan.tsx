@@ -98,7 +98,7 @@ export function Plan() {
             <span className="text-[13px] text-muted">{devices ? `${devices.length} de 2 vagas` : '2 vagas por assinatura'}</span>
           </div>
           {!v.online && <p className="text-[13.5px] text-muted">A lista aparece quando o Pro é ativado pelo e-mail.</p>}
-          {v.online && devErr && <p className="text-[13.5px] text-muted">{devErr} <button type="button" className="text-link hover:underline" onClick={() => void loadDevices()}>Tentar de novo</button></p>}
+          {v.online && devErr && <div className="flex flex-wrap items-center gap-2.5 text-[13.5px] text-muted"><span>{devErr}</span><Button size="sm" icon={RefreshCw} onClick={() => void loadDevices()}>Tentar de novo</Button></div>}
           {v.online && devices && (
             <ul className="flex flex-col divide-y divide-line rounded-lg border border-line">
               {devices.map((d) => (

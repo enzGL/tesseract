@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Check, KeyRound, Laptop, Mail, X } from 'lucide-react'
+import { Check, CreditCard, KeyRound, Laptop, Mail, RefreshCw, X } from 'lucide-react'
 import { useNavigate } from 'react-router'
 import { Button } from './ui'
 import {
@@ -76,7 +76,7 @@ function Activation({ reason, onClose }: { reason?: string; onClose: () => void 
             <Button type="submit" variant="primary" icon={Mail} disabled={busy || !email.includes('@')}>{busy ? 'Mandando...' : 'Mandar o código'}</Button>
           </form>
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3 text-[13px]">
-            <button type="button" className="text-link hover:underline" onClick={() => void go(async () => { await openCheckout() })}>Ainda não assino: ver planos</button>
+            <Button size="sm" icon={CreditCard} onClick={() => void go(async () => { await openCheckout() })}>Ainda não assino: ver planos</Button>
             <button type="button" className="text-muted hover:text-fg" onClick={() => { setError(''); setStep('chave') }}>Tenho uma chave</button>
           </div>
         </>}
@@ -94,7 +94,7 @@ function Activation({ reason, onClose }: { reason?: string; onClose: () => void 
           </form>
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3 text-[13px]">
             <button type="button" className="text-muted hover:text-fg" onClick={() => { setError(''); setResent(false); setStep('email') }}>Trocar o e-mail</button>
-            <button type="button" className="text-link hover:underline disabled:opacity-50" disabled={busy || resent} onClick={() => void resend()}>{resent ? 'Código novo mandado' : 'Mandar outro código'}</button>
+            <Button size="sm" icon={RefreshCw} disabled={busy || resent} onClick={() => void resend()}>{resent ? 'Código novo mandado' : 'Mandar outro código'}</Button>
           </div>
           <p className="text-[12.5px] leading-relaxed text-faint">Não chegou? Olhe o spam. Se o e-mail estiver certo e nada chegar, a assinatura pode estar em outro e-mail.</p>
         </>}

@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { Link } from 'react-router'
-import { ArrowRight, type LucideIcon } from 'lucide-react'
+import { ArrowRight, ChevronDown, ChevronRight, type LucideIcon } from 'lucide-react'
 
 const cx = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
 
@@ -9,8 +9,9 @@ export function Badge({ children, tone = 'accent' }: { children: ReactNode; tone
   return <span className={cx('inline-flex items-center rounded-md px-2 py-0.5 text-[12.5px] font-medium', tones[tone])}>{children}</span>
 }
 
-export function Button({ children, icon: Icon, variant = 'secondary', onClick, title, ariaLabel, type = 'button', disabled }: {
-  children?: ReactNode; icon?: LucideIcon; variant?: 'primary' | 'secondary' | 'light' | 'ghost'; onClick?: () => void; title?: string; ariaLabel?: string; type?: 'button' | 'submit'; disabled?: boolean
+// `size="sm"`: ação dentro de um cartão ou no meio de um texto. O que é ação tem cara de botão, não de link miúdo.
+export function Button({ children, icon: Icon, variant = 'secondary', size = 'md', onClick, title, ariaLabel, type = 'button', disabled }: {
+  children?: ReactNode; icon?: LucideIcon; variant?: 'primary' | 'secondary' | 'light' | 'ghost'; size?: 'md' | 'sm'; onClick?: () => void; title?: string; ariaLabel?: string; type?: 'button' | 'submit'; disabled?: boolean
 }) {
   const variants = {
     primary: 'bg-accent text-on-accent hover:bg-accent-strong',
@@ -26,14 +27,44 @@ export function Button({ children, icon: Icon, variant = 'secondary', onClick, t
       aria-label={ariaLabel}
       disabled={disabled}
       className={cx(
-        'inline-flex h-10 items-center justify-center gap-2 rounded-lg text-[14px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
-        children ? 'px-4' : 'w-10',
+        'inline-flex shrink-0 items-center justify-center font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+        size === 'sm' ? 'min-h-8 gap-1.5 rounded-md py-1 text-[13px] leading-tight' : 'h-10 gap-2 rounded-lg text-[14px]',
+        children ? (size === 'sm' ? 'px-3' : 'px-4') : size === 'sm' ? 'w-8' : 'w-10',
         variants[variant],
       )}
     >
-      {Icon && <Icon size={16} strokeWidth={1.8} />}
+      {Icon && <Icon size={size === 'sm' ? 14 : 16} strokeWidth={1.8} />}
       {children}
     </button>
+  )
+}
+
+// Seção que abre e fecha, com cara de cartão: ícone redondo, título, uma linha de explicação e a seta.
+export function Fold({ icon: Icon, iconClass = 'bg-accent-soft text-link', title, sub, open, children }: {
+  icon: LucideIcon; iconClass?: string; title: ReactNode; sub?: ReactNode; open?: boolean; children: ReactNode
+}) {
+  return (
+    <details className="rounded-xl border border-line-strong bg-card px-3 py-2.5" open={open}>
+      <summary className="flex cursor-pointer list-none items-center gap-2.5 [&::-webkit-details-marker]:hidden">
+        <span className={cx('flex size-9 shrink-0 items-center justify-center rounded-full', iconClass)}><Icon size={17} aria-hidden="true" /></span>
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="text-[14px] font-semibold text-fg">{title}</span>
+          {sub && <span className="text-[12px] text-muted">{sub}</span>}
+        </span>
+        <ChevronDown size={18} aria-hidden="true" className="shrink-0 text-muted transition-transform [[open]>summary>&]:rotate-180" />
+      </summary>
+      <div className="pt-3">{children}</div>
+    </details>
+  )
+}
+
+// Título de um <details> simples (lista de guias, arquivados): seta que gira e texto legível, em vez do marcador miúdo.
+export function FoldTitle({ children }: { children: ReactNode }) {
+  return (
+    <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-md py-1 text-[13.5px] font-medium text-fg hover:text-link [&::-webkit-details-marker]:hidden">
+      <ChevronRight size={15} aria-hidden="true" className="shrink-0 text-muted transition-transform [[open]>summary>&]:rotate-90" />
+      <span className="min-w-0 flex-1">{children}</span>
+    </summary>
   )
 }
 

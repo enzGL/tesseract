@@ -10,7 +10,7 @@ import {
   Archive, ArchiveRestore, ArrowDown, ArrowUp, Calendar, Check, CheckSquare, ChevronDown, Clock, FileText, Flag, FolderKanban,
   HelpCircle, Pause, Play, Plus, RotateCcw, Save, Search, Settings2, Square, Trash2, X,
 } from 'lucide-react'
-import { Button, EmptyState } from '../components/ui'
+import { Button, EmptyState, FoldTitle } from '../components/ui'
 import { Markdown } from '../components/Markdown'
 import { GuideBlock, HowItWorks } from '../components/Guide'
 import { GtdView } from './Gtd'
@@ -788,7 +788,7 @@ function NewProject({ onCreate, onClose }: { onCreate: (name: string, scope: str
               <span className="text-[12px] font-semibold text-muted">Métodos deste modelo</span>
               {pick.methods.filter((m) => m !== 'lista').map((m) => (
                 <details key={m} className="group rounded-lg border border-line px-3 py-2">
-                  <summary className="cursor-pointer text-[13.5px] font-medium">{methodName(m)} <span className="font-normal text-muted">· {method(m)!.what}</span></summary>
+                  <FoldTitle>{methodName(m)} <span className="font-normal text-muted">· {method(m)!.what}</span></FoldTitle>
                   <div className="pt-3"><GuideBlock guide={method(m)!.guide} compact /></div>
                 </details>
               ))}
@@ -919,15 +919,15 @@ function ProjectSettings({ project, board, onSave, onColumns, onArchive, onClose
             <div className="flex flex-col gap-2 rounded-xl border border-line px-4 py-3">
               <span className="text-[12.5px] font-semibold text-muted">Em outras telas do app, para todos os projetos</span>
               {elsewhere.map((m) => (
-                <details key={m.id}><summary className="cursor-pointer text-[13.5px]"><b className="font-semibold">{m.name}</b> <span className="text-muted">· {m.elsewhere}</span></summary>
+                <details key={m.id}><FoldTitle><b className="font-semibold">{m.name}</b> <span className="font-normal text-muted">· {m.elsewhere}</span></FoldTitle>
                   <div className="pt-3 pl-1"><GuideBlock guide={m.guide} compact /></div></details>
               ))}
             </div>
             <details className="rounded-xl border border-dashed border-line-strong px-4 py-3">
-              <summary className="cursor-pointer text-[13.5px] font-medium">Em breve: {soon.map((m) => m.name).join(', ')}</summary>
+              <FoldTitle>Em breve: {soon.map((m) => m.name).join(', ')}</FoldTitle>
               <ul className="flex flex-col gap-3 pt-3">
                 {soon.map((m) => (
-                  <li key={m.id}><details><summary className="cursor-pointer text-[13.5px]"><b className="font-semibold">{m.name}</b> <span className="text-muted">· {m.what}</span></summary>
+                  <li key={m.id}><details><FoldTitle><b className="font-semibold">{m.name}</b> <span className="font-normal text-muted">· {m.what}</span></FoldTitle>
                     <div className="pt-3 pl-1"><GuideBlock guide={m.guide} compact /></div></details></li>
                 ))}
               </ul>
@@ -1030,7 +1030,7 @@ function ProjectPicker({ projects, pid, scopeName, onPick, onNew }: { projects: 
               </div>
             ))}
             {archived.length > 0 && (
-              <details className="px-2.5 pt-2 text-[12.5px] text-faint"><summary className="cursor-pointer py-1">Arquivados ({archived.length})</summary>
+              <details className="px-2.5 pt-2 text-[12.5px] text-muted"><FoldTitle>Arquivados ({archived.length})</FoldTitle>
                 {archived.map((p) => <button key={p.id} type="button" onClick={() => { onPick(p.id); setOpen(false) }} className="block w-full truncate rounded px-1 py-1 text-left hover:text-fg">{p.name}</button>)}</details>
             )}
             <div className="mt-1.5 border-t border-line p-1.5 pt-2.5"><Button variant="primary" icon={Plus} onClick={() => { setOpen(false); onNew() }}>Novo projeto</Button></div>
@@ -1049,7 +1049,7 @@ function ReviewBanner({ project, onDone, onHow }: { project: Project; onDone: ()
     <div className="anim-rise flex flex-wrap items-center gap-3 rounded-xl border border-accent/40 bg-accent-soft/50 px-4 py-3 text-[13.5px]">
       <span className="font-mono text-[10.5px] tracking-[0.14em] text-link">RITUAL</span>
       <span className="flex-1">Hoje é dia da revisão semanal. 10 minutos: o que fechou, o que travou, o que entra.</span>
-      <button type="button" onClick={onHow} className="text-[13px] text-link hover:underline">Como fazer?</button>
+      <Button onClick={onHow}>Como fazer?</Button>
       <Button variant="primary" icon={Check} onClick={onDone}>Fiz a revisão</Button>
     </div>
   )

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { listen } from '@tauri-apps/api/event'
-import { Check, Download } from 'lucide-react'
+import { Check, Download, Sparkles } from 'lucide-react'
 import { CATALOG, fits, gbLabel, visible } from '../data/ai-catalog'
 import { call, inBrowser, message, type AiStatus } from '../data/api'
 import { Badge, Button } from './ui'
@@ -33,7 +33,7 @@ export function AiCatalog({ status, onChange }: { status: AiStatus | null; onCha
   const models = visible(ram || 8).filter((m) => m.kind !== 'engine')
   return (
     <div className="flex flex-col gap-2 text-[13.5px]">
-      {limited && <p className="text-[13px] text-muted">Baixar modelos para a IA no seu computador é do Pro. <button type="button" className="text-link hover:underline" onClick={() => openActivation('IA no seu computador')}>Ativar o Pro</button></p>}
+      {limited && <div className="flex flex-wrap items-center gap-2.5 text-[13px] text-muted"><span>Baixar modelos para a IA no seu computador é do Pro.</span><Button size="sm" variant="primary" icon={Sparkles} onClick={() => openActivation('IA no seu computador')}>Ativar o Pro</Button></div>}
       <p className="font-medium">Modelos para baixar {ram > 0 && <span className="font-normal text-muted">· este computador tem {ram} GB de memória</span>}</p>
       {!status?.ollama && <p className="text-[13px] text-muted">O Ollama não está ligado. Abra o Ollama, ou instale em ollama.com/download (o instalador do Tesseract também baixa, na etapa "IA no seu computador").</p>}
       <ul className="flex flex-col divide-y divide-line rounded-lg border border-line">
