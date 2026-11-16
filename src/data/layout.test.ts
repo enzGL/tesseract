@@ -89,7 +89,16 @@ describe('menu', () => {
   it('o Início nunca fica escondido, e caminho repetido ou desconhecido sai', () => {
     const m = normalize({ sections: [{ label: 'a', items: ['/', '/crm', '/crm', '/nao-existe'] }], hidden: ['/', '/nao-existe'], names: {} })
     expect(m.hidden).not.toContain('/')
-    expect(m.sections[0].items).toEqual(['/', '/crm'])
+    expect(m.sections[0].items).toEqual(['/', '/crm', '/precificacao'])
+  })
+
+  it('a Precificação entra visível logo depois do CRM, e escondida se o CRM estiver', () => {
+    const m = normalize({ sections: [{ label: 'Vender', items: ['/', '/crm', '/contratos'] }], hidden: [], names: {} })
+    expect(m.sections[0].items).toEqual(['/', '/crm', '/precificacao', '/contratos'])
+    expect(m.hidden).not.toContain('/precificacao')
+    expect(normalize({ sections: [{ label: '', items: ['/', '/crm'] }], hidden: ['/crm'], names: {} }).hidden).toContain('/precificacao')
+    const again = normalize(m)
+    expect(again.sections[0].items.filter((x) => x === '/precificacao')).toHaveLength(1)
   })
 
   it.each(SEGMENTS.map((s) => [s.id, s] as const))('o segmento %s cobre todos os módulos uma vez só', (_, seg) => {

@@ -53,6 +53,9 @@ mod briefing;
 #[path = "../../pro/rust/models.rs"]
 mod models;
 #[cfg(pro)]
+#[path = "../../pro/rust/pricing.rs"]
+mod pricing;
+#[cfg(pro)]
 #[path = "../../pro/rust/cloud.rs"]
 mod cloud;
 #[cfg(pro)]

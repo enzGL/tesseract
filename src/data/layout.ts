@@ -118,13 +118,21 @@ export const DEFAULT_MENU: MenuConfig = {
   hidden: [], names: {},
 }
 
+/** Módulo novo que entra ao lado de outro (visível se o vizinho estiver), em vez de escondido em "Outros":
+ *  quem usa o CRM acha a Precificação junto dele. */
+const NEW_NEAR: Record<string, string> = { '/precificacao': '/crm' }
+
 /** Garante que todo módulo existe em alguma seção (os novos entram escondidos) e que o Início fica visível. */
 export function normalize(m: MenuConfig | undefined): MenuConfig {
   const base = m && Array.isArray(m.sections) ? m : DEFAULT_MENU
   const seen = new Set<string>()
   const sections = base.sections.map((s) => ({ label: s.label ?? '', items: s.items.filter((p) => MENU_PATHS.includes(p) && !seen.has(p) && (seen.add(p), true)) }))
-  const missing = MENU_PATHS.filter((p) => !seen.has(p))
   const hidden = new Set((base.hidden ?? []).filter((p) => MENU_PATHS.includes(p)))
+  for (const [p, near] of Object.entries(NEW_NEAR)) {
+    const s = !seen.has(p) && MENU_PATHS.includes(p) ? sections.find((x) => x.items.includes(near)) : undefined
+    if (s) { s.items.splice(s.items.indexOf(near) + 1, 0, p); seen.add(p); if (hidden.has(near)) hidden.add(p) }
+  }
+  const missing = MENU_PATHS.filter((p) => !seen.has(p))
   if (missing.length) {
     let other = sections.find((s) => s.label === 'Outros')
     if (!other) { other = { label: 'Outros', items: [] }; sections.push(other) }
@@ -201,7 +209,7 @@ export const SEGMENTS: Segment[] = [
     prospect: 'desligada', prospectText: 'Clínica costuma receber gente por indicação e Instagram. Dá para ligar depois e buscar empresas para convênio.',
     extra: 'O CRM aparece com o nome Pacientes e o Calendário como Agenda.' },
   { id: 'sites', name: 'Vende sites', short: 'quem vende sites', about: 'Prospecção, proposta, projeto e manutenção', icon: Code2,
-    sections: [['', ['/', '/painel', '/chat', '/cerebro']], ['Vender', ['/prospeccao', '/crm', '/briefing', '/contratos', '/modelos']], ['Entregar', ['/projetos', '/horas', '/calendario']], ['Dinheiro', ['/cobranca', '/financas']]],
+    sections: [['', ['/', '/painel', '/chat', '/cerebro']], ['Vender', ['/prospeccao', '/crm', '/precificacao', '/briefing', '/contratos', '/modelos']], ['Entregar', ['/projetos', '/horas', '/calendario']], ['Dinheiro', ['/cobranca', '/financas']]],
     names: {},
     board: 'Sites', columns: ['Briefing', 'Layout', 'Montagem', 'Publicação', '30 dias de ajustes'],
     widgets: ['leads', 'funil', 'quadro', 'cobrancas', 'receita'],

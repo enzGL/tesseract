@@ -3,17 +3,18 @@
 
 export type StageId = 'identificado' | 'qualificado' | 'contato' | 'conversa' | 'reuniao' | 'diagnostico' | 'proposta' | 'negociacao' | 'ganho' | 'perdido'
 // Os 10 estágios do funil, na ordem, com a chance padrão de fechar e o tom da pílula (cinza → amarelo → azul).
-export const STAGES: { id: StageId; name: string; chance: number; color: string }[] = [
-  { id: 'identificado', name: 'Identificado', chance: 5, color: '#8A93B4' },
-  { id: 'qualificado', name: 'Qualificado', chance: 10, color: '#8A93B4' },
-  { id: 'contato', name: 'Primeiro contato', chance: 15, color: '#C9A227' },
-  { id: 'conversa', name: 'Em conversa', chance: 25, color: '#C9A227' },
-  { id: 'reuniao', name: 'Reunião marcada', chance: 35, color: '#E0A800' },
-  { id: 'diagnostico', name: 'Diagnóstico', chance: 45, color: '#E0A800' },
-  { id: 'proposta', name: 'Proposta enviada', chance: 60, color: '#2238C4' },
-  { id: 'negociacao', name: 'Negociação', chance: 75, color: '#2238C4' },
-  { id: 'ganho', name: 'Ganho', chance: 100, color: '#1D6B45' },
-  { id: 'perdido', name: 'Perdido', chance: 0, color: '#8A93B4' },
+// hint: o que quer dizer estar no estágio (aparece ao passar o mouse no nome da coluna do funil)
+export const STAGES: { id: StageId; name: string; chance: number; color: string; hint: string }[] = [
+  { id: 'identificado', name: 'Identificado', chance: 5, color: '#8A93B4', hint: 'Você achou a empresa e ela pode virar cliente, mas ainda não falou com ela. É onde chegam os leads da Prospecção.' },
+  { id: 'qualificado', name: 'Qualificado', chance: 10, color: '#8A93B4', hint: 'Você conferiu que vale a pena: tem o perfil do seu cliente ideal e um jeito de chegar em quem decide. Ainda sem contato.' },
+  { id: 'contato', name: 'Primeiro contato', chance: 15, color: '#C9A227', hint: 'Você já mandou a primeira mensagem ou ligou, e está esperando a resposta.' },
+  { id: 'conversa', name: 'Em conversa', chance: 25, color: '#C9A227', hint: 'A pessoa respondeu e vocês estão conversando.' },
+  { id: 'reuniao', name: 'Reunião marcada', chance: 35, color: '#E0A800', hint: 'Tem uma reunião ou ligação marcada para entender o que a pessoa precisa.' },
+  { id: 'diagnostico', name: 'Diagnóstico', chance: 45, color: '#E0A800', hint: 'Você já entendeu o problema e o que resolveria; falta montar a proposta.' },
+  { id: 'proposta', name: 'Proposta enviada', chance: 60, color: '#2238C4', hint: 'A proposta, com o que você vai fazer e o preço, foi enviada. Aguardando a resposta.' },
+  { id: 'negociacao', name: 'Negociação', chance: 75, color: '#2238C4', hint: 'A pessoa quer fechar, mas ainda acerta preço, prazo ou condições.' },
+  { id: 'ganho', name: 'Ganho', chance: 100, color: '#1D6B45', hint: 'Fechou negócio. Vira receita prevista em Finanças.' },
+  { id: 'perdido', name: 'Perdido', chance: 0, color: '#8A93B4', hint: 'Não fechou. O motivo vai para o relatório.' },
 ]
 export const OPEN_STAGES = STAGES.slice(0, 8)
 export const stageOf = (id: string) => STAGES.find((s) => s.id === id) ?? STAGES[0]

@@ -44,6 +44,7 @@ pub const MIGRATIONS: &[&str] = &[
   include_str!("../migrations/0033_imports.sql"),
   include_str!("../migrations/0034_automations.sql"),
   include_str!("../migrations/0035_import_keep.sql"),
+  include_str!("../migrations/0036_pricing.sql"),
 ];
 
 pub type Result<T> = std::result::Result<T, String>;

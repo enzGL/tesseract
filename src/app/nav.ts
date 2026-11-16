@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   Bot, Brain, CalendarDays, GraduationCap, FileSignature, FolderKanban, LayoutGrid, Megaphone,
-  MessageSquare, Radar, Timer, ChartNoAxesColumn, ClipboardList, Settings, Share2, Users, Wallet, Workflow, HandCoins, ScrollText, Package, FileInput,
+  MessageSquare, Radar, Timer, ChartNoAxesColumn, ClipboardList, Settings, Share2, Users, Wallet, Workflow, HandCoins, ScrollText, Package, FileInput, Calculator,
 } from 'lucide-react'
 
 export type Module = {
@@ -46,6 +46,7 @@ export const NAV: NavGroup[] = [
       { path: '/briefing', label: 'Briefing', code: 'BRIEFING', icon: ScrollText, summary: 'Tudo sobre o cliente numa folha antes da reunião, com a fonte de cada item.', phase: 12, pro: true },
       { path: '/modelos', label: 'Modelos de negócio', code: 'MODELS', icon: Package, summary: 'Pacotes prontos por área: projeto, proposta, contrato e parcelas montados de uma vez.', phase: 12, pro: true },
       { path: '/prospeccao', label: 'Prospecção', code: 'PROSPECT', icon: Radar, summary: 'Descoberta e qualificação de empresas por nicho e cidade.', phase: 7, pro: true },
+      { path: '/precificacao', label: 'Precificação', code: 'PRICE', icon: Calculator, summary: 'Tabela de preços por hora e margem, orçamento em cada lead e importação da sua planilha.', phase: 12, pro: true },
       { path: '/contratos', label: 'Contratos', code: 'DOCS', icon: FileSignature, summary: 'Propostas, contratos e recibos com versões e parcelas.', phase: 8, pro: true },
     ],
   },
@@ -77,7 +78,7 @@ const byPath = (p: string) => ALL_MODULES.find((m) => m.path === p)!
 export const SIDEBAR: SideSection[] = [
   { items: ['/', '/painel', '/chat', '/cerebro'].map(byPath) },
   { label: 'Trabalho', items: ['/projetos', '/horas', '/relatorios', '/calendario', '/financas', '/cobranca'].map(byPath) },
-  { label: 'Comercial', items: ['/crm', '/briefing', '/prospeccao', '/contratos', '/modelos'].map(byPath) },
+  { label: 'Comercial', items: ['/crm', '/briefing', '/prospeccao', '/precificacao', '/contratos', '/modelos'].map(byPath) },
   { label: 'Marketing', items: ['/campanhas', '/social'].map(byPath) },
   { label: 'Assistentes', items: ['/bots', '/automacoes'].map(byPath) },
   { label: 'Aprender', items: ['/tutorial'].map(byPath) },

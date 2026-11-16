@@ -1,5 +1,21 @@
 [
   {
+    "version": "0.4.4",
+    "date": "2026-11-16",
+    "seguranca": false,
+    "todos": [
+      "Módulo novo que tem par no menu entra visível ao lado dele, em vez de escondido em \"Outros\""
+    ],
+    "pro": [
+      "Precificação: a sua tabela de preços com a conta por hora, custo fixo e 3 margens, e a faixa de preço de cada serviço",
+      "Precificar dentro da oportunidade do CRM e do lead da Prospecção: ajuste as horas para o cliente, escolha a margem, use o preço como valor e gere a proposta só com os itens e o preço",
+      "Importe a planilha de preços que você já usa (.xlsx ou .csv): calculadora vira a conta do app, lista vira a tabela",
+      "CRM: lupa no funil para achar o cartão pelo nome da empresa, do contato ou do título",
+      "CRM: passe o mouse no nome da coluna para ver o que quer dizer cada estágio",
+      "Follow-up com a IA: quando já saiu mensagem pelo WhatsApp e ninguém respondeu, a IA escreve a retomada sem repetir a primeira"
+    ]
+  },
+  {
     "version": "0.4.3",
     "date": "2026-11-16",
     "seguranca": false,
