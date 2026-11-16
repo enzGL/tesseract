@@ -87,7 +87,7 @@ Prospecção, CRM, Finanças da empresa e organizações são **Pro**.
 | # | O que fazer | O que deve aparecer | Legenda |
 |---|---|---|---|
 | 1 | Em Bots > Vendas > Ajustes, colar dois modelos em "Modelos de prospecção". "Salvar modelos". | Os modelos guardados. | "Cole as mensagens que você já usa. O bot imita o seu jeito." |
-| 2 | No lead, em "Mensagem de abordagem", clicar em "Personalizar com IA". | "Personalizando…" e o texto com o bairro, a nota no Google e o ramo. | "A mensagem usa só dados públicos da empresa." |
+| 2 | No lead, em "Mensagem de abordagem", clicar em "Escrever com a IA". | "Escrevendo…" e o texto com o bairro, a nota no Google e o ramo. | "A mensagem usa só dados públicos da empresa." |
 | 3 | (Se externo) Mostrar o aviso e clicar em "Enviar". | O texto gerado. | "Com IA da internet, você vê antes o que vai sair." |
 | 4 | Editar uma frase à mão. | O texto editado. | "Sempre revise. Quem fala é você." |
 | 5 | Clicar em "Abrir no WhatsApp". | O WhatsApp abre com o texto. Aparece "WhatsApp aberto com a mensagem. Revise e aperte enviar lá." | "O Tesseract não envia sozinho. Você aperta enviar." |

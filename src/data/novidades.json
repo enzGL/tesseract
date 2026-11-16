@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.4.3",
+    "date": "2026-11-16",
+    "seguranca": false,
+    "todos": [],
+    "pro": [
+      "Mensagem de abordagem: converse com a IA sobre a mensagem. Diga o que ela deve levar em conta (por exemplo, \"ele já tem site; a proposta é melhorar o site\") e peça ajustes até ficar do seu jeito",
+      "Mensagem de abordagem: o nome da empresa sai sem a cidade e o estado que vêm no Google (\"Diamond Estética Automotiva - Americana SP\" vira \"Diamond Estética Automotiva\")"
+    ]
+  },
+  {
     "version": "0.4.2",
     "date": "2026-11-16",
     "seguranca": false,

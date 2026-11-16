@@ -71,7 +71,7 @@ Prospecção, CRM, Bots, Documentos, organizações e Campanhas são **Pro**.
 | 1 | Em Bots, abrir Vendas, aba Ajustes. | Instruções, permissões e "MODELOS DE PROSPECÇÃO". | "O bot de Vendas é quem escreve as mensagens." |
 | 2 | Colar três modelos e "Salvar modelos". | Os modelos guardados (até 10). | "Cole as mensagens que já funcionaram para você." |
 | 3 | Mostrar a permissão "Usar provedor externo" desligada. | A chave desligada. | "Desligado, tudo é escrito pela IA do seu computador." |
-| 4 | Na Triagem, num lead A, clicar em "Personalizar com IA". | Uma mensagem no mesmo tom dos modelos, com dados públicos da empresa. | "A mensagem imita o seu jeito e cita a empresa." |
+| 4 | Na Triagem, num lead A, clicar em "Escrever com a IA". | Uma mensagem no mesmo tom dos modelos, com dados públicos da empresa. | "A mensagem imita o seu jeito e cita a empresa." |
 | 5 | Ligar o provedor externo no bot e gerar de novo. | O aviso "Isto vai sair do seu computador" com o modelo, o que você vende e os dados públicos. Clicar em "Enviar". | "Com IA da internet, você vê antes o que sai. E decide." |
 | 6 | Revisar o texto e clicar em "Abrir no WhatsApp". | O WhatsApp abre com o texto. | "O app não envia sozinho. Você revisa e aperta enviar." |
 | 7 | Apertar E para enviar o lead ao CRM. | "Está no CRM, em Identificado." | "Mandou a mensagem? Leve para o CRM." |
@@ -91,7 +91,7 @@ Prospecção, CRM, Bots, Documentos, organizações e Campanhas são **Pro**.
 | 3 | Marcar o follow-up para o dia da demonstração, com o que fazer: `demonstrar agenda`. | O follow-up no cartão. | "Cada oportunidade tem sempre um próximo passo." |
 | 4 | Com o app minimizado, apertar Ctrl+Shift+Espaço e digitar `ligar pro Salão Bela Trama sexta 15h`. | Em "Para onde vai": follow-up do cliente, sexta, 15h. Enter guarda. | "Lembrou no meio de outra coisa? Anote. O app acha o cliente e a data." |
 | 5 | Aba Follow-ups, grupo Esfriando. | A oportunidade parada, com a cadência sugerida. | "Sem contato há duas semanas? Volte a falar antes que esfrie." |
-| 6 | Na ficha da empresa, abrir "Personalizar com IA" pelo CRM e "Abrir no WhatsApp". | O registro no histórico da empresa. | "Pelo CRM também. Fica registrado no histórico." |
+| 6 | Na ficha da empresa, usar "Escrever com a IA" pelo CRM e "Abrir no WhatsApp". | O registro no histórico da empresa. | "Pelo CRM também. Fica registrado no histórico." |
 
 ### Ep. 5: Proposta, assinatura e receita recorrente
 
